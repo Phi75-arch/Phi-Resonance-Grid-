@@ -1,0 +1,111 @@
+#!/usr/bin/env python3
+"""
+Φ-RESONANCE SAFE SCANNER v0.1
+Pure analysis only - no modifications, no network calls after startup
+"""
+
+import sys
+import ast
+import math
+
+PHI = (1 + 5 ** 0.5) / 2  # 1.618033988749895
+
+def print_banner():
+    print("🌌" * 30)
+    print("Φ-RESONANCE SAFE SCANNER")
+    print("Analysis only - no files will be modified")
+    print("🌌" * 30)
+
+def analyze_file(filepath):
+    """Safely analyze a file for resonance patterns"""
+    findings = []
+    
+    try:
+        with open(filepath, 'r') as f:
+            content = f.read()
+    except Exception as e:
+        return [f"Could not read file: {e}"]
+    
+    try:
+        tree = ast.parse(content)
+    except SyntaxError as e:
+        return [f"Syntax error: {e}"]
+    
+    # Check 1: Function parameter count (Miller's Law / Φ)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.FunctionDef):
+            param_count = len(node.args.args)
+            if param_count > 5:  # Φ-adjusted Miller's Law (7/Φ ≈ 4.33)
+                findings.append(
+                    f"Line {node.lineno}: '{node.name}' has {param_count} parameters "
+                    f"(Φ-harmonic limit: 4-5)"
+                )
+    
+    # Check 2: Nested loops (forced iteration patterns)
+    for node in ast.walk(tree):
+        if isinstance(node, ast.For):
+            # Check depth by walking children
+            depth = 0
+            for child in ast.walk(node):
+                if isinstance(child, ast.For):
+                    depth += 1
+            if depth > 2:
+                findings.append(
+                    f"Line {node.lineno}: Nested loops depth {depth} "
+                    f"(Wu Wei suggestion: consider map/filter)"
+                )
+    
+    # Check 3: Magic numbers that could be Φ-harmonized
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Constant) and isinstance(node.value, (int, float)):
+            val = node.value
+            if val > 10 and val < 1000 and val not in (100, 200, 500):
+                # Check if it's close to a Φ-harmonic number
+                phi_val = round(val * PHI)
+                if abs(phi_val - val) / val > 0.1:  # More than 10% off
+                    findings.append(
+                        f"Line {node.lineno}: Magic number {val} "
+                        f"(Φ-harmonic suggestion: {phi_val} or {round(val/PHI)})"
+                    )
+    
+    return findings
+
+def main():
+    print_banner()
+    
+    if len(sys.argv) != 2:
+        print("Usage: phi-scan-safe <filename>")
+        print("Example: phi-scan-safe mycode.py")
+        sys.exit(1)
+    
+    filepath = sys.argv[1]
+    
+    print(f"\nAnalyzing: {filepath}")
+    print("-" * 40)
+    
+    findings = analyze_file(filepath)
+    
+    if not findings:
+        print("✓ High resonance detected")
+        print("The code flows naturally with few detectable dissonances")
+    else:
+        print(f"Found {len(findings)} potential resonance issues:\n")
+        for i, finding in enumerate(findings, 1):
+            print(f"{i}. {finding}")
+        
+        print("\n🔧 Wu Wei Suggestions:")
+        print("1. For parameter bloat: Consider context objects or builder pattern")
+        print("2. For nested loops: Try list comprehensions or generator expressions")
+        print("3. For magic numbers: Round to nearest Φ-harmonic (× or ÷ 1.618)")
+        print("\n💡 Remember: These are suggestions, not commands.")
+        print("Only change what feels resonant to you.")
+    
+    print("\n" + "🌌" * 30)
+    print("Scan complete. No files were modified.")
+    print("\nNext steps:")
+    print("1. Notice how your body feels about these findings")
+    print("2. Apply only the changes that feel resonant")
+    print("3. Share your experience: #PhiResonance")
+
+if __name__ == "__main__":
+    main()
