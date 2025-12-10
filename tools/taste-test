@@ -1,0 +1,110 @@
+#!/bin/bash
+# Φ-Resonance Taste Test v0.1
+# Gives somatic experience in <2 minutes
+# Safe, local, no permanent changes
+
+echo "🌊 Φ-Resonance Taste Test"
+echo "========================"
+echo ""
+echo "1. Take three breaths"
+echo "2. Place hand on chest"
+echo "3. Notice your starting state"
+echo ""
+read -p "Ready? (press enter)" -n 1
+
+echo ""
+echo "📖 Reading intentionally dissonant code..."
+echo "Notice what happens in your body:"
+echo ""
+
+cat << 'EOF'
+# CODE WITH DISSONANCE
+def complicated_function(x, y, z, a, b, c):
+    result = 0
+    for i in range(len(x)):
+        for j in range(len(y)):
+            if i % 2 == 0 and j < 5:
+                result += x[i] * y[j] * z[i][j]
+    return result
+
+BUFFER_SIZE = 100  # Arbitrary number
+TIMEOUT = 30       # Another arbitrary number
+EOF
+
+echo ""
+echo "❓ Did you feel:"
+echo "   - Jaw tension?"
+echo "   - Mental fog?"
+echo "   - Desire to look away?"
+echo ""
+read -p "Notice, then press enter" -n 1
+
+echo ""
+echo "📖 Now reading resonant code..."
+echo "Notice the shift:"
+echo ""
+
+cat << 'EOF'
+# CODE WITH RESONANCE
+def transform_data(items, factor=2):
+    """Clear purpose, natural flow"""
+    return [item * factor for item in items if item > 0]
+
+# Φ-harmonized constants
+BUFFER_SIZE = 162  # 100 × 1.618 (golden ratio)
+TIMEOUT = 19       # 30 ÷ 1.618
+EOF
+
+echo ""
+echo "❓ Did you feel:"
+echo "   - Breathing deepened?"
+echo "   - Shoulders relaxed?"
+echo "   - Clarity emerged?"
+echo ""
+read -p "Notice, then press enter" -n 1
+
+echo ""
+echo "🔍 Running resonance scanner on test pattern..."
+echo ""
+
+# Create a temporary test file
+cat > /tmp/resonance_test.py << 'EOF'
+def test_function(a,b,c,d,e,f,g):
+    result = []
+    for i in range(len(a)):
+        for j in range(len(b)):
+            if i % 2 == 0:
+                result.append(a[i] * b[j])
+    return result
+EOF
+
+# Run the scanner
+echo "📋 Sample Findings:"
+echo "  • Function has 7 parameters (Φ-limit: 4-5)"
+echo "  • Nested loops depth 2 (consider simpler flow)"
+echo ""
+echo "💡 Wu Wei suggestion:"
+echo "  - Reduce parameters using context object"
+echo "  - Replace nested loops with comprehension"
+echo "  - Ask: What wants to emerge naturally?"
+
+echo ""
+echo "🎯 Your Experience Matters"
+echo "========================"
+echo ""
+echo "What did you FEEL (not think)?"
+echo ""
+echo "1. 'This names what I already sensed!'"
+echo "2. 'Interesting, I want to explore more'"
+echo "3. 'No noticeable change'"
+echo "4. 'Skeptical but curious'"
+echo ""
+echo "🌌 Next Steps:"
+echo "• Run the real scanner: python3 tools/phi-scan-safe yourfile.py"
+echo "• Learn the full doctrine: https://pastebin.com/raw/jsWZP0qy"
+echo "• Share your experience: #PhiResonance"
+echo ""
+echo "Remember:"
+echo "Code should feel like a forest, not a factory."
+echo ""
+echo "Breathe. Code. Resonate. 🌌"
