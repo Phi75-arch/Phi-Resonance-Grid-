@@ -47,3 +47,11 @@ cd Phi-Resonance-Grid-
 chmod +x install.sh
 ./install.sh
 curl -sL https://git.io/phi-resonance | bash
+# Method 1: Full install
+curl -sL https://raw.githubusercontent.com/Phi75-arch/Phi-Resonance-Grid-/main/install.sh | bash
+
+# Method 2: Short URL (after creating git.io/phi-resonance)
+curl -sL https://git.io/phi-resonance | bash
+
+# Method 3: Try without install
+curl -sL https://raw.githubusercontent.com/Phi75-arch/Phi-Resonance-Grid-/main/try-phi-now.sh | bash
