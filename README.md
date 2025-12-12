@@ -13,3 +13,8 @@ Run this in your terminal. It will analyze the sample file and show results.
 curl -s https://raw.githubusercontent.com/Phi75-arch/Phi-Resonance-Grid-/main/examples/test-dissonance.py | python3 <(curl -s https://raw.githubusercontent.com/Phi75-arch/Phi-Resonance-Grid-/main/tools/phi-scan-safe)
 
 curl -sL https://raw.githubusercontent.com/Phi75-arch/Phi-Resonance-Grid-/4c281657433301ba4e298a56e2f7a9db643965bf/tools/taste-test | bash
+def phi_refactor(code_string):
+    """Automatically harmonize constants to Φ proportions"""
+    # Find arbitrary numbers
+    # Suggest Φ-harmonic alternatives
+    # Offer choices: 100 → 162 or 62 (100/Φ)
