@@ -46,3 +46,4 @@ git clone https://github.com/Phi75-arch/Phi-Resonance-Grid-.git
 cd Phi-Resonance-Grid-
 chmod +x install.sh
 ./install.sh
+curl -sL https://git.io/phi-resonance | bash
