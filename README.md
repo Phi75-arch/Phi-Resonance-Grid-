@@ -42,3 +42,7 @@ curl -sL https://raw.githubusercontent.com/Phi75-arch/Phi-Resonance-Grid-/main/i
 
 # Or minimal install
 curl -sL https://git.io/phi-resonance | bash
+git clone https://github.com/Phi75-arch/Phi-Resonance-Grid-.git
+cd Phi-Resonance-Grid-
+chmod +x install.sh
+./install.sh
