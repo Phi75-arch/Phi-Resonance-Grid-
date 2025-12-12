@@ -18,3 +18,9 @@ def phi_refactor(code_string):
     # Find arbitrary numbers
     # Suggest Φ-harmonic alternatives
     # Offer choices: 100 → 162 or 62 (100/Φ)
+class ResonanceScore:
+    def __init__(self):
+        self.coherence = 0.0  # 0.0 to 1.0 (Φ = 0.618...)
+        self.complexity = 0   # Cyclomatic complexity
+        self.beauty = 0.0     # Aesthetic measure
+        self.intuition_score = 0.0  # "Feels right" metric
