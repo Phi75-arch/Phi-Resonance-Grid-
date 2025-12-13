@@ -14,11 +14,4 @@ curl -s https://raw.githubusercontent.com/Phi75-arch/Phi-Resonance-Grid-/main/ex
 
 curl -sL https://raw.githubusercontent.com/Phi75-arch/Phi-Resonance-Grid-/4c281657433301ba4e298a56e2f7a9db643965bf/tools/taste-test | bash
 
-# Method 1: Full install
-curl -sL https://raw.githubusercontent.com/Phi75-arch/Phi-Resonance-Grid-/main/install.sh | bash
 
-# Method 2: Short URL (after creating git.io/phi-resonance)
-curl -sL https://git.io/phi-resonance | bash
-
-# Method 3: Try without install
-curl -sL https://raw.githubusercontent.com/Phi75-arch/Phi-Resonance-Grid-/main/try-phi-now.sh | bash
