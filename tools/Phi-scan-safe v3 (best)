@@ -1,0 +1,419 @@
+#!/usr/bin/env python3
+"""
+Φ-RESONANCE CODE SCANNER v0.3 (REFACTORED)
+Doctrine of Sympathetic Resonance - Silicon Implementation
+
+Refactored according to its own principles:
+- analyze_file() broken into focused analyzers
+- Early returns replace nested conditionals
+- Each function has single, clear purpose
+"""
+
+import sys
+import ast
+import math
+
+PHI = (1 + 5 ** 0.5) / 2  # 1.618033988749895
+FIBONACCI = [1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987]
+
+def print_banner():
+    print("=" * 60)
+    print(" " * 15 + "Φ-RESONANCE CODE SCANNER v0.3")
+    print(" " * 10 + "Doctrine of Sympathetic Resonance")
+    print("=" * 60)
+    print("Analysis mode: Non-coercive suggestions only")
+    print("Principle: Code resonates when aligned with natural law")
+    print("=" * 60)
+
+# ============================================================================
+# HARMONIC ANALYSIS FUNCTIONS
+# ============================================================================
+
+def is_phi_harmonic(val):
+    """Check if value resonates with Phi or Fibonacci"""
+    # Check Fibonacci sequence
+    for fib in FIBONACCI:
+        if abs(val - fib) / max(fib, 1) < 0.05:
+            return True, fib, "Fibonacci"
+    
+    # Check Phi powers
+    for n in range(-5, 10):
+        phi_power = PHI ** n
+        if 0.5 < phi_power < 2000:
+            if abs(val - phi_power) / max(val, phi_power) < 0.05:
+                return True, round(phi_power, 2), f"Φ^{n}"
+    
+    return False, None, None
+
+def suggest_phi_harmonic(val):
+    """Suggest nearest Phi-harmonic alternative"""
+    candidates = []
+    
+    for fib in FIBONACCI:
+        if fib > 0:
+            candidates.append((abs(val - fib), fib, "Fibonacci"))
+    
+    for n in range(-3, 8):
+        phi_power = round(PHI ** n)
+        if 1 < phi_power < 2000:
+            candidates.append((abs(val - phi_power), phi_power, f"Φ^{n}"))
+    
+    if candidates:
+        candidates.sort()
+        return candidates[0][1], candidates[0][2]
+    return None, None
+
+# ============================================================================
+# COMPLEXITY ANALYSIS FUNCTIONS
+# ============================================================================
+
+def calculate_complexity(node):
+    """Calculate cyclomatic complexity"""
+    complexity = 1
+    for child in ast.walk(node):
+        if isinstance(child, (ast.If, ast.For, ast.While, ast.ExceptHandler, 
+                             ast.With, ast.Assert)):
+            complexity += 1
+        elif isinstance(child, ast.BoolOp):
+            complexity += len(child.values) - 1
+    return complexity
+
+def check_recursion(node, function_name):
+    """Detect recursive function calls"""
+    for child in ast.walk(node):
+        if isinstance(child, ast.Call):
+            if isinstance(child.func, ast.Name) and child.func.id == function_name:
+                return True
+            elif isinstance(child.func, ast.Attribute) and child.func.attr == function_name:
+                return True
+    return False
+
+def count_loop_depth(node, current_depth=0):
+    """Count maximum loop nesting depth (recursive)"""
+    max_depth = current_depth
+    for child in ast.iter_child_nodes(node):
+        if isinstance(child, (ast.For, ast.While)):
+            child_depth = count_loop_depth(child, current_depth + 1)
+            max_depth = max(max_depth, child_depth)
+        else:
+            child_depth = count_loop_depth(child, current_depth)
+            max_depth = max(max_depth, child_depth)
+    return max_depth
+
+# ============================================================================
+# INDIVIDUAL ANALYZERS (extracted from monolithic analyze_file)
+# ============================================================================
+
+def analyze_parameters(tree, findings):
+    """Analyze function parameter counts"""
+    phi_limit = round(7 / PHI)  # ≈ 4
+    
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.FunctionDef):
+            continue
+            
+        param_count = len(node.args.args)
+        
+        if param_count > 5:
+            findings['dissonance'].append({
+                'line': node.lineno,
+                'type': 'Parameter Overload',
+                'message': f"Function '{node.name}' has {param_count} parameters",
+                'suggestion': f"Φ-harmonic limit: {phi_limit}-5. Consider context object",
+                'severity': 'medium'
+            })
+        elif param_count <= phi_limit:
+            findings['resonance'].append({
+                'line': node.lineno,
+                'type': 'Clean Interface',
+                'message': f"Function '{node.name}' has {param_count} parameters (Φ-harmonic ✓)"
+            })
+
+def analyze_complexity_patterns(tree, findings, stats):
+    """Analyze cyclomatic complexity and recursion"""
+    phi_complexity_limit = round(10 / PHI)  # ≈ 6
+    complexities = []
+    
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.FunctionDef):
+            continue
+            
+        stats['functions'] += 1
+        complexity = calculate_complexity(node)
+        complexities.append(complexity)
+        
+        # Check complexity
+        if complexity > phi_complexity_limit:
+            findings['dissonance'].append({
+                'line': node.lineno,
+                'type': 'Cognitive Overload',
+                'message': f"Function '{node.name}' complexity: {complexity}",
+                'suggestion': f"Φ-limit: {phi_complexity_limit}. Extract helpers or use early returns",
+                'severity': 'high'
+            })
+        elif complexity <= 3:
+            findings['resonance'].append({
+                'line': node.lineno,
+                'type': 'Flow State',
+                'message': f"Function '{node.name}' complexity: {complexity} (low cognitive load ✓)"
+            })
+        
+        # Check recursion
+        if check_recursion(node, node.name):
+            findings['resonance'].append({
+                'line': node.lineno,
+                'type': 'Fractal Pattern',
+                'message': f"Function '{node.name}' uses recursion (self-similar, Φ-spiral ✓)"
+            })
+    
+    if complexities:
+        stats['avg_complexity'] = sum(complexities) / len(complexities)
+
+def analyze_loop_patterns(tree, findings):
+    """Analyze loop nesting depth"""
+    for node in ast.walk(tree):
+        if not isinstance(node, (ast.For, ast.While)):
+            continue
+            
+        depth = count_loop_depth(node, 1)
+        if depth > 2:
+            findings['dissonance'].append({
+                'line': node.lineno,
+                'type': 'Forced Iteration',
+                'message': f"Loop nesting depth: {depth}",
+                'suggestion': "Wu Wei: Consider map/filter/reduce or recursion",
+                'severity': 'medium'
+            })
+
+def is_analyzable_constant(val):
+    """Guard: Check if constant should be analyzed"""
+    if val in (0, 1, -1, 2, 10, 100, 1000):
+        return False
+    if val < 0:
+        return False
+    if not (2 <= val <= 1000):
+        return False
+    return True
+
+def analyze_constants(tree, findings, stats):
+    """Analyze magic numbers for Φ-harmonic patterns"""
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Constant):
+            continue
+        if not isinstance(node.value, (int, float)):
+            continue
+            
+        val = node.value
+        
+        # Early return guards
+        if not is_analyzable_constant(val):
+            continue
+        
+        stats['total_constants'] += 1
+        is_harmonic, match_val, match_type = is_phi_harmonic(val)
+        
+        if is_harmonic:
+            stats['phi_harmonic_constants'] += 1
+            findings['resonance'].append({
+                'line': node.lineno,
+                'type': 'Natural Constant',
+                'message': f"Value {val} resonates with {match_type}: {match_val} ✓"
+            })
+        else:
+            suggestion, basis = suggest_phi_harmonic(val)
+            if suggestion and abs(val - suggestion) / val > 0.1:
+                findings['neutral'].append({
+                    'line': node.lineno,
+                    'type': 'Arbitrary Constant',
+                    'message': f"Magic number: {val}",
+                    'suggestion': f"Φ-harmonic alternative: {suggestion} ({basis})",
+                    'severity': 'low'
+                })
+
+# ============================================================================
+# MAIN ANALYSIS ORCHESTRATOR
+# ============================================================================
+
+def load_and_parse(filepath):
+    """Load file and parse into AST"""
+    try:
+        with open(filepath, 'r', encoding='utf-8') as f:
+            content = f.read()
+        tree = ast.parse(content)
+        return tree, None
+    except FileNotFoundError:
+        return None, "File not found"
+    except SyntaxError as e:
+        return None, f"Syntax error: {e}"
+    except Exception as e:
+        return None, f"Error reading file: {e}"
+
+def analyze_file(filepath):
+    """Main analysis function - now orchestrates focused analyzers"""
+    findings = {
+        'dissonance': [],
+        'resonance': [],
+        'neutral': []
+    }
+    stats = {
+        'functions': 0,
+        'avg_complexity': 0,
+        'phi_harmonic_constants': 0,
+        'total_constants': 0
+    }
+    
+    # Load and parse
+    tree, error = load_and_parse(filepath)
+    if error:
+        findings['dissonance'].append({'message': error})
+        return findings, stats
+    
+    # Run focused analyzers
+    analyze_parameters(tree, findings)
+    analyze_complexity_patterns(tree, findings, stats)
+    analyze_loop_patterns(tree, findings)
+    analyze_constants(tree, findings, stats)
+    
+    return findings, stats
+
+# ============================================================================
+# SCORING & REPORTING
+# ============================================================================
+
+def calculate_resonance_score(findings, stats):
+    """Calculate overall resonance score (0-100)"""
+    if stats['functions'] == 0:
+        return None
+    
+    score = 50
+    
+    # Penalties
+    high = len([f for f in findings['dissonance'] if f.get('severity') == 'high'])
+    medium = len([f for f in findings['dissonance'] if f.get('severity') == 'medium'])
+    low = len([f for f in findings['dissonance'] if f.get('severity') == 'low'])
+    
+    score -= high * 10
+    score -= medium * 5
+    score -= low * 2
+    
+    # Bonuses
+    score += min(len(findings['resonance']) * 2, 30)
+    
+    if stats['total_constants'] > 0:
+        phi_ratio = stats['phi_harmonic_constants'] / stats['total_constants']
+        score += phi_ratio * 20
+    
+    return max(0, min(100, score))
+
+def print_statistics(stats):
+    """Print code statistics"""
+    print(f"\n📊 Code Statistics:")
+    print(f"  Functions analyzed: {stats['functions']}")
+    if stats['functions'] > 0:
+        print(f"  Average complexity: {stats['avg_complexity']:.1f}")
+    if stats['total_constants'] > 0:
+        phi_pct = (stats['phi_harmonic_constants'] / stats['total_constants']) * 100
+        print(f"  Φ-harmonic constants: {stats['phi_harmonic_constants']}/{stats['total_constants']} ({phi_pct:.0f}%)")
+
+def print_score(score):
+    """Print resonance score with interpretation"""
+    if score is None:
+        return
+        
+    print(f"\n🎵 Resonance Score: {score:.0f}/100")
+    
+    if score >= 80:
+        print("   Status: High Coherence - Code flows naturally")
+    elif score >= 60:
+        print("   Status: Moderate Coherence - Some optimization possible")
+    elif score >= 40:
+        print("   Status: Mixed Signals - Consider refactoring")
+    else:
+        print("   Status: High Dissonance - Significant restructuring suggested")
+
+def print_findings_section(findings, section_type, title, icon, limit=5):
+    """Print a section of findings"""
+    items = findings[section_type]
+    if not items:
+        return
+        
+    print(f"\n{icon} {title} ({len(items)} found):")
+    
+    for item in items[:limit]:
+        if 'line' in item:
+            severity_icon = ''
+            if 'severity' in item:
+                severity_map = {'high': '🔴', 'medium': '🟡', 'low': '⚪'}
+                severity_icon = severity_map.get(item['severity'], '') + ' '
+            
+            print(f"  {severity_icon}Line {item['line']}: {item['type']}")
+            print(f"     {item['message']}")
+            if 'suggestion' in item:
+                print(f"     💡 {item['suggestion']}")
+        else:
+            print(f"  {item['message']}")
+    
+    if len(items) > limit:
+        print(f"  ... and {len(items) - limit} more")
+
+def print_results(findings, stats, filepath):
+    """Display analysis results"""
+    print(f"\n{'='*60}")
+    print(f"Analysis: {filepath}")
+    print(f"{'='*60}")
+    
+    print_statistics(stats)
+    
+    score = calculate_resonance_score(findings, stats)
+    print_score(score)
+    
+    print_findings_section(findings, 'resonance', 'Resonant Patterns', '✓')
+    print_findings_section(findings, 'dissonance', 'Dissonance Detected', '⚠')
+    
+    if len(findings['neutral']) <= 10:
+        print_findings_section(findings, 'neutral', 'Neutral Observations', '💭')
+    
+    print(f"\n{'='*60}")
+    print("🌊 Wu Wei Principle:")
+    print("These are invitations, not commands.")
+    print("Change only what feels resonant to you.")
+    print("The goal is flow, not perfection.")
+    print(f"{'='*60}")
+
+def print_feedback_prompt():
+    """Request user feedback"""
+    print("\n📊 Post-Scan Reflection (Optional):")
+    print("Your feedback tunes this tool's resonance.")
+    print("\nOn a scale of 1-5:")
+    print("  How resonant did these findings feel?")
+    print("  How actionable were the suggestions?")
+    print("  Did this reduce or increase cognitive clarity?")
+    print("\nShare your experience: #PhiResonance")
+
+# ============================================================================
+# MAIN ENTRY POINT
+# ============================================================================
+
+def main():
+    print_banner()
+    
+    if len(sys.argv) != 2:
+        print("\nUsage: phi-scan <filename>")
+        print("Example: phi-scan mycode.py")
+        print("\nPrinciple: Code structured according to natural law")
+        print("           (Φ ratio, Fibonacci) flows more easily")
+        sys.exit(1)
+    
+    filepath = sys.argv[1]
+    findings, stats = analyze_file(filepath)
+    
+    print_results(findings, stats, filepath)
+    print_feedback_prompt()
+    
+    print(f"\n{'='*60}")
+    print("Scan complete. No files were modified.")
+    print("To tune yourself is to tune the code.")
+    print(f"{'='*60}\n")
+
+if __name__ == "__main__":
+    main()
