@@ -119,4 +119,4 @@ In these contexts, machine constraints outweigh human-scale heuristics.
 
 6. Conclusion
 
-Φ-Resonance reframes static analysis as a dialogue rather than a verdict. Its contribution lies not in enforcing better code, but in creating conditions where better code is more likely to emerge voluntaril
+Φ-Resonance reframes static analysis as a dialogue rather than a verdict. Its contribution lies not in enforcing better code, but in creating conditions where better code is more likely to emerge voluntarily.
