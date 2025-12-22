@@ -3,8 +3,6 @@
 
 ---
 
-README.md
-
 Φ-Resonance Grid
 
 A non-coercive, reflective static analysis framework
