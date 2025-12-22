@@ -81,9 +81,6 @@ research.md — theoretical grounding and architecture
 
 ux-study.md — evaluation methodology
 
-CODE-OF-RESONANCE.md — usage ethics and philosophy
-
-
 
 ---
 
@@ -95,28 +92,6 @@ This project is experimental and evolving. Feedback is welcome.
 
 
 ---
-
-Additional Recommended Files
-
-CONTRIBUTING.md
-
-Emphasize respectful discussion
-
-Clarify non-coercive philosophy
-
-Encourage UX feedback, not just PRs
-
-
-OUTPUT-MODES.md
-
-Describe Poetic / Neutral / Strict output voices
-
-
-CHANGELOG.md
-
-Track philosophical and technical changes separately
-
-
 
 ---
 
