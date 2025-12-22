@@ -81,7 +81,7 @@ research.md — theoretical grounding and architecture
 
 ux-study.md — evaluation methodology
 
-code-of-resonance.md - usage ethics and philosophy 
+code-of-resonance.md usage ethics and philosophy 
 ---
 
 Status
