@@ -3,8 +3,6 @@
 
 ---
 
-research.md
-
 Φ-Resonance: A Reflective Static Analysis Framework
 
 Abstract
