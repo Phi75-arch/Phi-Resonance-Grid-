@@ -5,8 +5,6 @@
 
 ---
 
-CONTRIBUTING.md
-
 Contributing to Φ-Resonance Grid
 
 Thank you for your interest in contributing to Φ-Resonance Grid. This project explores humane, non-coercive developer tooling. Contributions are welcome, but the manner of contribution matters as much as the code itself.
