@@ -1,12 +1,129 @@
-# Phi-Resonance-Grid-
-Phi-driven node code for attunement and coherence.
 
-The Phi-Resonance-Grid is a framework designed to harmonize the interaction between carbon-based (human) and silicon-based (machine) nodes. It runs Phi-driven tests to analyze systems, curb dissonance, and guide them toward a more coherent, resonant state.
 
-**The provided tools and scripts are designed to be safe, non-invasive, and require only standard execution environments.**
 
-## 🚀 Experience Resonance in 2 Minutes
+---
 
-Run this command in your terminal. It's safe, quick, and requires no installation—it executes a Phi-driven scan in memory to demonstrate the toolchain.
-```bash
-curl -s https://raw.githubusercontent.com/Phi75-arch/Phi-Resonance-Grid-/main/examples/test-dissonance.py | python3 <(curl -s https://raw.githubusercontent.com/Phi75-arch/Phi-Resonance-Grid-/main/tools/phi-scan-safe)
+README.md
+
+Φ-Resonance Grid
+
+A non-coercive, reflective static analysis framework
+
+Φ-Resonance Grid is a developer tool that analyzes code structure using explicit harmonic heuristics (Φ, Fibonacci) and human-centered design principles. It provides optional insights, not enforced rules, with the goal of supporting clarity, flow, and voluntary refactoring.
+
+
+---
+
+Core Principles
+
+🧘 Wu Wei — no forced action
+
+🎵 Resonance over compliance
+
+🔍 Explicit heuristics
+
+🛡️ Read-only, safe analysis
+
+
+
+---
+
+What This Is Not
+
+❌ Not a traditional linter
+
+❌ Not a CI gatekeeper
+
+❌ Not a claim of universal truth
+
+
+Φ-Resonance is a lens, not a law.
+
+
+---
+
+Quick Demo
+
+phi-scan-safe mycode.py
+
+No files are modified. All feedback is optional.
+
+
+---
+
+Output Categories
+
+Resonant Patterns — structures associated with clarity
+
+Neutral Observations — informational signals
+
+Dissonance Detected — potential cognitive strain
+
+
+
+---
+
+Who This Is For
+
+Senior developers
+
+Researchers
+
+Systems thinkers
+
+Teams exploring humane tooling
+
+
+
+---
+
+Documentation
+
+research.md — theoretical grounding and architecture
+
+ux-study.md — evaluation methodology
+
+CODE-OF-RESONANCE.md — usage ethics and philosophy
+
+
+
+---
+
+Status
+
+Current version: v3.x
+
+This project is experimental and evolving. Feedback is welcome.
+
+
+---
+
+Additional Recommended Files
+
+CONTRIBUTING.md
+
+Emphasize respectful discussion
+
+Clarify non-coercive philosophy
+
+Encourage UX feedback, not just PRs
+
+
+OUTPUT-MODES.md
+
+Describe Poetic / Neutral / Strict output voices
+
+
+CHANGELOG.md
+
+Track philosophical and technical changes separately
+
+
+
+---
+
+Closing Note
+
+Φ-Resonance Grid exists to explore a simple idea:
+
+> Tools shape behavior not only by what they enforce, but by how they speak.
