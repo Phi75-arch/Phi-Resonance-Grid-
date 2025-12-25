@@ -1,0 +1,67 @@
+import ast
+import math
+import json
+from pathlib import Path
+
+PHI = (1 + 5 ** 0.5) / 2
+EPSILON = 0.12  # efficiency tolerance band
+
+
+class Metrics:
+    def __init__(self):
+        self.structural_load = 0
+        self.functional_yield = 0
+
+    def phi_er(self):
+        if self.functional_yield == 0:
+            return float("inf")
+        return self.structural_load / self.functional_yield
+
+
+class Analyzer(ast.NodeVisitor):
+    def __init__(self):
+        self.metrics = Metrics()
+
+    def visit_FunctionDef(self, node):
+        self.metrics.structural_load += self._complexity(node)
+        self.metrics.functional_yield += 1
+        self.generic_visit(node)
+
+    def _complexity(self, node):
+        score = 1
+        for n in ast.walk(node):
+            if isinstance(n, (ast.If, ast.For, ast.While, ast.And, ast.Or)):
+                score += 1
+        return score
+
+
+def scan(path):
+    analyzer = Analyzer()
+    for file in Path(path).rglob("*.py"):
+        tree = ast.parse(file.read_text())
+        analyzer.visit(tree)
+    return analyzer.metrics
+
+
+def phi_diagnostics(metrics):
+    phi_er = metrics.phi_er()
+    divergence = abs(phi_er - PHI)
+
+    return {
+        "phi_er": round(phi_er, 3),
+        "phi": round(PHI, 3),
+        "divergence": round(divergence, 3),
+        "status": (
+            "efficient"
+            if divergence <= EPSILON
+            else "over-structured" if phi_er > PHI else "under-structured"
+        ),
+        "entropy_risk": "low" if divergence <= EPSILON else "elevated",
+    }
+
+
+if __name__ == "__main__":
+    import sys
+    metrics = scan(sys.argv[1])
+    report = phi_diagnostics(metrics)
+    print(json.dumps(report, indent=2))
