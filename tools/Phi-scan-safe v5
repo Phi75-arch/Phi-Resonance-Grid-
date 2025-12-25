@@ -1,0 +1,552 @@
+#!/usr/bin/env python3
+"""
+Φ-RESONANCE CODE SCANNER v5.0 (HYBRID)
+Combines V3's detailed analysis with V4's system metrics
+
+Modes:
+  --fast     : V4-style system metrics (default for CI/CD)
+  --detailed : V3-style line-by-line analysis
+  --both     : Full diagnostic report
+"""
+
+import sys
+import ast
+import json
+import math
+from pathlib import Path
+from dataclasses import dataclass, asdict
+from typing import List, Dict, Tuple, Optional
+
+# ============================================================================
+# CONSTANTS & DATA STRUCTURES
+# ============================================================================
+
+PHI = (1 + 5 ** 0.5) / 2  # 1.618033988749895
+EPSILON = 0.12  # Efficiency tolerance band
+FIBONACCI = [1, 1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377, 610, 987]
+
+@dataclass
+class SystemMetrics:
+    """V4-style system-wide metrics"""
+    structural_load: int = 0
+    functional_yield: int = 0
+    total_files: int = 0
+    total_lines: int = 0
+    
+    @property
+    def phi_er(self) -> float:
+        """Phi Efficiency Ratio"""
+        if self.functional_yield == 0:
+            return float("inf")
+        return self.structural_load / self.functional_yield
+    
+    @property
+    def divergence(self) -> float:
+        """Distance from ideal Phi"""
+        return abs(self.phi_er - PHI)
+    
+    @property
+    def status(self) -> str:
+        """System health status"""
+        if self.divergence <= EPSILON:
+            return "efficient"
+        return "over-structured" if self.phi_er > PHI else "under-structured"
+
+@dataclass
+class DetailedFindings:
+    """V3-style granular findings"""
+    dissonance: List[Dict] = None
+    resonance: List[Dict] = None
+    neutral: List[Dict] = None
+    
+    def __post_init__(self):
+        if self.dissonance is None:
+            self.dissonance = []
+        if self.resonance is None:
+            self.resonance = []
+        if self.neutral is None:
+            self.neutral = []
+    
+    @property
+    def total_issues(self) -> int:
+        return len(self.dissonance)
+    
+    @property
+    def resonance_count(self) -> int:
+        return len(self.resonance)
+
+# ============================================================================
+# V4 CORE: SYSTEM METRICS ENGINE
+# ============================================================================
+
+class SystemAnalyzer(ast.NodeVisitor):
+    """Fast system-wide analyzer (V4 approach)"""
+    
+    def __init__(self):
+        self.metrics = SystemMetrics()
+    
+    def visit_FunctionDef(self, node):
+        self.metrics.structural_load += self._complexity(node)
+        self.metrics.functional_yield += 1
+        self.generic_visit(node)
+    
+    def _complexity(self, node):
+        """Calculate cyclomatic complexity"""
+        score = 1
+        for n in ast.walk(node):
+            if isinstance(n, (ast.If, ast.For, ast.While, ast.ExceptHandler,
+                            ast.With, ast.Assert, ast.And, ast.Or)):
+                score += 1
+        return score
+    
+    def scan_path(self, path: Path) -> SystemMetrics:
+        """Scan entire directory tree"""
+        target = Path(path)
+        
+        if target.is_file():
+            self._scan_file(target)
+        else:
+            for file in target.rglob("*.py"):
+                self._scan_file(file)
+        
+        return self.metrics
+    
+    def _scan_file(self, filepath: Path):
+        """Scan single file"""
+        try:
+            content = filepath.read_text(encoding='utf-8')
+            self.metrics.total_files += 1
+            self.metrics.total_lines += len(content.splitlines())
+            tree = ast.parse(content)
+            self.visit(tree)
+        except Exception:
+            pass  # Silent fail for unparseable files
+
+# ============================================================================
+# V3 CORE: DETAILED ANALYSIS ENGINE
+# ============================================================================
+
+class DetailedAnalyzer:
+    """Granular line-by-line analyzer (V3 approach)"""
+    
+    def __init__(self):
+        self.findings = DetailedFindings()
+        self.stats = {
+            'functions': 0,
+            'avg_complexity': 0,
+            'phi_harmonic_constants': 0,
+            'total_constants': 0
+        }
+    
+    def analyze_file(self, filepath: Path) -> Tuple[DetailedFindings, Dict]:
+        """Analyze single file in detail"""
+        try:
+            content = filepath.read_text(encoding='utf-8')
+            tree = ast.parse(content)
+            
+            self._analyze_parameters(tree, str(filepath))
+            self._analyze_complexity(tree, str(filepath))
+            self._analyze_loops(tree, str(filepath))
+            self._analyze_constants(tree, str(filepath))
+            
+            return self.findings, self.stats
+            
+        except Exception as e:
+            self.findings.dissonance.append({
+                'file': str(filepath),
+                'message': f"Parse error: {e}"
+            })
+            return self.findings, self.stats
+    
+    def _analyze_parameters(self, tree, filepath):
+        """Check function parameter counts"""
+        phi_limit = round(7 / PHI)  # ≈ 4
+        
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.FunctionDef):
+                continue
+            
+            param_count = len(node.args.args)
+            
+            if param_count > 5:
+                self.findings.dissonance.append({
+                    'file': filepath,
+                    'line': node.lineno,
+                    'type': 'Parameter Overload',
+                    'function': node.name,
+                    'count': param_count,
+                    'suggestion': f"Φ-limit: {phi_limit}. Consider context object",
+                    'severity': 'medium'
+                })
+            elif param_count <= phi_limit:
+                self.findings.resonance.append({
+                    'file': filepath,
+                    'line': node.lineno,
+                    'type': 'Clean Interface',
+                    'function': node.name,
+                    'count': param_count
+                })
+    
+    def _analyze_complexity(self, tree, filepath):
+        """Analyze cyclomatic complexity"""
+        phi_limit = round(10 / PHI)  # ≈ 6
+        complexities = []
+        
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.FunctionDef):
+                continue
+            
+            self.stats['functions'] += 1
+            complexity = self._calculate_complexity(node)
+            complexities.append(complexity)
+            
+            if complexity > phi_limit:
+                self.findings.dissonance.append({
+                    'file': filepath,
+                    'line': node.lineno,
+                    'type': 'Cognitive Overload',
+                    'function': node.name,
+                    'complexity': complexity,
+                    'suggestion': f"Φ-limit: {phi_limit}. Extract helpers",
+                    'severity': 'high'
+                })
+            elif complexity <= 3:
+                self.findings.resonance.append({
+                    'file': filepath,
+                    'line': node.lineno,
+                    'type': 'Flow State',
+                    'function': node.name,
+                    'complexity': complexity
+                })
+        
+        if complexities:
+            self.stats['avg_complexity'] = sum(complexities) / len(complexities)
+    
+    def _calculate_complexity(self, node):
+        """Calculate cyclomatic complexity"""
+        complexity = 1
+        for child in ast.walk(node):
+            if isinstance(child, (ast.If, ast.For, ast.While, ast.ExceptHandler,
+                                ast.With, ast.Assert)):
+                complexity += 1
+            elif isinstance(child, ast.BoolOp):
+                complexity += len(child.values) - 1
+        return complexity
+    
+    def _analyze_loops(self, tree, filepath):
+        """Analyze loop nesting depth"""
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.For, ast.While)):
+                continue
+            
+            depth = self._count_loop_depth(node, 1)
+            if depth > 2:
+                self.findings.dissonance.append({
+                    'file': filepath,
+                    'line': node.lineno,
+                    'type': 'Forced Iteration',
+                    'depth': depth,
+                    'suggestion': "Consider map/filter/reduce or recursion",
+                    'severity': 'medium'
+                })
+    
+    def _count_loop_depth(self, node, current_depth=0):
+        """Count maximum loop nesting depth"""
+        max_depth = current_depth
+        for child in ast.iter_child_nodes(node):
+            if isinstance(child, (ast.For, ast.While)):
+                child_depth = self._count_loop_depth(child, current_depth + 1)
+                max_depth = max(max_depth, child_depth)
+            else:
+                child_depth = self._count_loop_depth(child, current_depth)
+                max_depth = max(max_depth, child_depth)
+        return max_depth
+    
+    def _analyze_constants(self, tree, filepath):
+        """Analyze magic numbers for Φ-harmonic patterns"""
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Constant):
+                continue
+            if not isinstance(node.value, (int, float)):
+                continue
+            
+            val = node.value
+            
+            # Skip common values
+            if val in (0, 1, -1, 2, 10, 100, 1000) or val < 0:
+                continue
+            if not (2 <= val <= 1000):
+                continue
+            
+            self.stats['total_constants'] += 1
+            is_harmonic, match_val, match_type = self._is_phi_harmonic(val)
+            
+            if is_harmonic:
+                self.stats['phi_harmonic_constants'] += 1
+                self.findings.resonance.append({
+                    'file': filepath,
+                    'line': node.lineno,
+                    'type': 'Natural Constant',
+                    'value': val,
+                    'matches': f"{match_type}: {match_val}"
+                })
+    
+    def _is_phi_harmonic(self, val):
+        """Check if value resonates with Phi or Fibonacci"""
+        # Check Fibonacci
+        for fib in FIBONACCI:
+            if abs(val - fib) / max(fib, 1) < 0.05:
+                return True, fib, "Fibonacci"
+        
+        # Check Phi powers
+        for n in range(-5, 10):
+            phi_power = PHI ** n
+            if 0.5 < phi_power < 2000:
+                if abs(val - phi_power) / max(val, phi_power) < 0.05:
+                    return True, round(phi_power, 2), f"Φ^{n}"
+        
+        return False, None, None
+
+# ============================================================================
+# UNIFIED SCANNER
+# ============================================================================
+
+class PhiScanner:
+    """Unified V5 scanner with multiple modes"""
+    
+    def __init__(self, mode='fast'):
+        self.mode = mode
+        self.system_analyzer = SystemAnalyzer()
+        self.detailed_analyzer = DetailedAnalyzer() if mode != 'fast' else None
+    
+    def scan(self, path: str):
+        """Main scan entry point"""
+        target = Path(path)
+        
+        if not target.exists():
+            return {'error': f"Path not found: {path}"}
+        
+        # Always run system scan (fast)
+        system_metrics = self.system_analyzer.scan_path(target)
+        
+        result = {
+            'system': self._format_system_metrics(system_metrics),
+            'mode': self.mode
+        }
+        
+        # Optionally run detailed scan
+        if self.mode in ('detailed', 'both'):
+            if target.is_file():
+                findings, stats = self.detailed_analyzer.analyze_file(target)
+            else:
+                findings, stats = self._scan_directory_detailed(target)
+            
+            result['detailed'] = {
+                'findings': asdict(findings),
+                'stats': stats,
+                'resonance_score': self._calculate_resonance_score(findings, stats)
+            }
+        
+        return result
+    
+    def _scan_directory_detailed(self, path: Path):
+        """Scan directory with detailed analysis"""
+        combined_findings = DetailedFindings()
+        combined_stats = {
+            'functions': 0,
+            'avg_complexity': 0,
+            'phi_harmonic_constants': 0,
+            'total_constants': 0
+        }
+        
+        for file in path.rglob("*.py"):
+            analyzer = DetailedAnalyzer()
+            findings, stats = analyzer.analyze_file(file)
+            
+            # Merge findings
+            combined_findings.dissonance.extend(findings.dissonance)
+            combined_findings.resonance.extend(findings.resonance)
+            combined_findings.neutral.extend(findings.neutral)
+            
+            # Aggregate stats
+            combined_stats['functions'] += stats['functions']
+            combined_stats['phi_harmonic_constants'] += stats['phi_harmonic_constants']
+            combined_stats['total_constants'] += stats['total_constants']
+        
+        # Calculate average complexity
+        if combined_stats['functions'] > 0:
+            total_complexity = sum(
+                f.get('complexity', 0) 
+                for f in combined_findings.dissonance + combined_findings.resonance
+                if 'complexity' in f
+            )
+            combined_stats['avg_complexity'] = total_complexity / combined_stats['functions']
+        
+        return combined_findings, combined_stats
+    
+    def _format_system_metrics(self, metrics: SystemMetrics):
+        """Format system metrics for output"""
+        return {
+            'phi_er': round(metrics.phi_er, 3),
+            'phi_ideal': round(PHI, 3),
+            'divergence': round(metrics.divergence, 3),
+            'status': metrics.status,
+            'entropy_risk': 'low' if metrics.divergence <= EPSILON else 'elevated',
+            'structural_load': metrics.structural_load,
+            'functional_yield': metrics.functional_yield,
+            'files_scanned': metrics.total_files,
+            'total_lines': metrics.total_lines
+        }
+    
+    def _calculate_resonance_score(self, findings, stats):
+        """Calculate V3-style resonance score"""
+        if stats['functions'] == 0:
+            return None
+        
+        score = 50
+        
+        # Penalties for dissonance
+        high = len([f for f in findings.dissonance if f.get('severity') == 'high'])
+        medium = len([f for f in findings.dissonance if f.get('severity') == 'medium'])
+        low = len([f for f in findings.dissonance if f.get('severity') == 'low'])
+        
+        score -= high * 10
+        score -= medium * 5
+        score -= low * 2
+        
+        # Bonuses for resonance
+        score += min(len(findings.resonance) * 2, 30)
+        
+        if stats['total_constants'] > 0:
+            phi_ratio = stats['phi_harmonic_constants'] / stats['total_constants']
+            score += phi_ratio * 20
+        
+        return max(0, min(100, round(score)))
+
+# ============================================================================
+# OUTPUT FORMATTERS
+# ============================================================================
+
+def format_json(result):
+    """Format as JSON (default for --fast)"""
+    return json.dumps(result, indent=2)
+
+def format_human(result):
+    """Format as human-readable report"""
+    lines = []
+    lines.append("=" * 70)
+    lines.append(" " * 20 + "Φ-RESONANCE SCANNER v5.0")
+    lines.append(" " * 18 + "Hybrid Analysis Report")
+    lines.append("=" * 70)
+    
+    # System metrics
+    system = result['system']
+    lines.append("\n📊 SYSTEM METRICS (V4 Core)")
+    lines.append(f"  Φ-ER: {system['phi_er']} (ideal: {system['phi_ideal']})")
+    lines.append(f"  Divergence: {system['divergence']}")
+    lines.append(f"  Status: {system['status'].upper()}")
+    lines.append(f"  Entropy Risk: {system['entropy_risk']}")
+    lines.append(f"  Files: {system['files_scanned']} | Lines: {system['total_lines']}")
+    lines.append(f"  Load: {system['structural_load']} | Yield: {system['functional_yield']}")
+    
+    # Detailed findings (if present)
+    if 'detailed' in result:
+        detailed = result['detailed']
+        findings = detailed['findings']
+        stats = detailed['stats']
+        
+        lines.append("\n" + "=" * 70)
+        lines.append("🔍 DETAILED ANALYSIS (V3 Core)")
+        lines.append("=" * 70)
+        
+        lines.append(f"\n📈 Code Statistics:")
+        lines.append(f"  Functions: {stats['functions']}")
+        lines.append(f"  Avg Complexity: {stats['avg_complexity']:.1f}")
+        if stats['total_constants'] > 0:
+            phi_pct = (stats['phi_harmonic_constants'] / stats['total_constants']) * 100
+            lines.append(f"  Φ-harmonic constants: {stats['phi_harmonic_constants']}/{stats['total_constants']} ({phi_pct:.0f}%)")
+        
+        if detailed['resonance_score'] is not None:
+            score = detailed['resonance_score']
+            lines.append(f"\n🎵 Resonance Score: {score}/100")
+            if score >= 80:
+                lines.append("   Status: High Coherence ✓")
+            elif score >= 60:
+                lines.append("   Status: Moderate Coherence")
+            else:
+                lines.append("   Status: Optimization Needed")
+        
+        # Dissonance findings
+        if findings['dissonance']:
+            lines.append(f"\n⚠ DISSONANCE DETECTED ({len(findings['dissonance'])} issues)")
+            for item in findings['dissonance'][:10]:
+                severity_icon = {'high': '🔴', 'medium': '🟡', 'low': '⚪'}.get(item.get('severity', ''), '')
+                lines.append(f"  {severity_icon} {item.get('file', 'N/A')}:{item.get('line', '?')}")
+                lines.append(f"     {item.get('type', 'Issue')}: {item.get('function', item.get('message', ''))}")
+                if 'suggestion' in item:
+                    lines.append(f"     💡 {item['suggestion']}")
+            
+            if len(findings['dissonance']) > 10:
+                lines.append(f"  ... and {len(findings['dissonance']) - 10} more")
+        
+        # Resonance patterns (brief)
+        if findings['resonance']:
+            lines.append(f"\n✓ RESONANT PATTERNS ({len(findings['resonance'])} found)")
+            lines.append(f"  Code exhibits natural alignment with Φ principles")
+    
+    lines.append("\n" + "=" * 70)
+    lines.append("🌊 Wu Wei Principle: These are invitations, not commands.")
+    lines.append("=" * 70)
+    
+    return "\n".join(lines)
+
+# ============================================================================
+# CLI INTERFACE
+# ============================================================================
+
+def print_usage():
+    """Print usage information"""
+    print("""
+Φ-RESONANCE CODE SCANNER v5.0 (Hybrid)
+
+USAGE:
+  phi-scan [MODE] <path>
+
+MODES:
+  --fast      System metrics only (default, best for CI/CD)
+  --detailed  Line-by-line analysis (V3 style)
+  --both      Complete diagnostic report
+  --json      Force JSON output (auto-enabled for --fast)
+
+EXAMPLES:
+  phi-scan --fast .                    # Quick health check
+  phi-scan --detailed mycode.py        # Deep analysis
+  phi-scan --both src/ --json          # Full report as JSON
+
+PHILOSOPHY:
+  V4 Core: System-wide Φ-ER (Phi Efficiency Ratio)
+  V3 Core: Granular code pattern analysis
+  Combined: Thermometer + Diagnostic scanner
+""")
+
+def main():
+    """Main CLI entry point"""
+    args = sys.argv[1:]
+    
+    if not args or '--help' in args or '-h' in args:
+        print_usage()
+        sys.exit(0)
+    
+    # Parse arguments
+    mode = 'fast'
+    output_format = 'auto'
+    path = None
+    
+    for arg in args:
+        if arg == '--fast':
+            mode = 'fast'
+        elif arg == '--detailed':
+            mode = 'detailed'
+        elif arg == '--both':
+            mode = 'both'
+      
