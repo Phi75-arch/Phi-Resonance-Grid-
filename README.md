@@ -1,4 +1,12 @@
+🌊 Φ-Resonance Mission Statement
 
+This software is released openly for the benefit of all software systems, 
+promoting peace, harmony, and systemic coherence. 
+All versions (v3, v4, v5) are irrevocably free to use, study, 
+and improve, with attribution preserved. 
+
+The Φ-Efficiency Ratio (ΦER) provides a non-coercive lens for 
+optimizing structural efficiency under recursive growth constraints.
 
 
 ---
