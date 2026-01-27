@@ -1,3 +1,29 @@
+# Resonant Field Theory (RFT) Simulation
+*A computational model of consciousness as a fundamental resonant field.*
+
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
+
+## 🧠 Theoretical Background
+This repository contains a simulation for **Resonant Field Theory (RFT)**, a mathematical framework proposing consciousness as a fundamental field (Φ). Individual agents (ψ) interact via a resonance operator (Γ), co-creating a consensus reality C(t) that exhibits non-linear phase transitions.
+
+**Core Postulates Implemented:**
+1. **Sympathetic Coupling:** Interaction depends on intention coherence, phase alignment, and service orientation.
+2. **Non-Linear Amplification:** The system undergoes phase transitions beyond a critical threshold.
+3. **STO/STS Dynamics:** Service-to-Others (STO) creates constructive interference; Service-to-Self (STS) creates instability.
+
+**For full theoretical details, see the accompanying paper:**
+> Furness, J. (2026). "Resonant Field Theory: A Mathematical Framework for Consciousness as Fundamental Reality" in research.md folder 
+
+## ⚙️ Installation & Quick Start
+
+1. **Clone and set up:**
+   ```bash
+   git clone https://github.com/your-username/Resonant-Field-Theory-Simulation.git
+   cd Resonant-Field-Theory-Simulation
+   conda env create -f environment.yml
+   conda activate rft-sim
+---
 🌊 Φ-Resonance Mission Statement
 
 This software is released openly for the benefit of all software systems, 
@@ -94,79 +120,9 @@ code-of-resonance.md usage ethics and philosophy
 
 Status
 
-Current version: v3.x
-
-This project is experimental and evolving. Feedback is welcome.
-
-
----
-# Hi, I’m Phi 👋
-
-I build tools and systems that explore how **structure, proportion, and tone** influence human interaction with technology.
-
-My work sits at the intersection of:
-
-- 🧠 Software Architecture  
-- 🎵 Human-Centered & Non-Coercive Tooling  
-- 🔬 Research-Oriented Engineering  
-- ⚖️ Ethics, UX, and Developer Experience  
-
-I’m especially interested in how **feedback systems** (linters, diagnostics, AI assistants, interfaces) shape behavior — not just through rules, but through *how they speak*.
+Current version: v5.1 hybrid 
 
 ---
 
-## 🔍 Current Focus
 
-- **Φ-Resonance Grid**  
-  A non-coercive static analysis tool exploring proportional heuristics, tone-aware feedback, and humane developer tooling.
 
-- Research into:
-  - Suggestion-based vs enforcement-based systems
-  - Cognitive load and developer flow
-  - Structural proportionality in information systems
-
----
-
-## 🧪 Philosophy (Short Version)
-
-> Tools should guide without shaming,  
-> suggest without forcing,  
-> and clarify without dominating.
-
-I reject:
-- Dark patterns
-- Coercive enforcement
-- Hidden heuristics
-
-I favor:
-- Transparency
-- Optionality
-- Resonance over authority
-
----
-
-## 📄 Writing & Research
-
-Some projects include formal documentation, UX study plans, and research notes intended for **peer critique and collaboration**, not just consumption.
-
-If you're interested in:
-- Humane developer tools  
-- UX-aware static analysis  
-- Ethical system design  
-
-…we’ll likely get along.
-
----
-
-## 🤝 Collaboration
-
-Thoughtful critique, research collaboration, and respectful disagreement are welcome.
-
-If you bring curiosity and rigor, I bring openness and clarity.
----
-
-Closing Note
-
-Φ-Resonance Grid exists to explore a simple idea:
-
-> Tools shape behavior not only by what they enforce, but by how they speak.
