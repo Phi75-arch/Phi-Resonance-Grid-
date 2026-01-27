@@ -19,8 +19,7 @@ This repository contains a simulation for **Resonant Field Theory (RFT)**, a mat
 
 1. **Clone and set up:**
    ```bash
-   git clone https://github.com/Phi75-arch/Phi-Resonance-Grid-/tools
-/Resonant Field theory Simulation.git
+   git clone https://github.com/Phi75-arch/Phi-Resonance-Grid-/tools/Resonant Field theory Simulation.git
    cd Resonant-Field-Theory-Simulation
    conda env create -f environment.yml
    conda activate rft-sim
