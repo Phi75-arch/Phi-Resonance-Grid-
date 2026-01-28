@@ -124,5 +124,5 @@ Current version: v5.1 hybrid
 
 ---
 
-
+python scripts/run_demo.py
 
