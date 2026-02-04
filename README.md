@@ -1,5 +1,12 @@
 # Φ-Resonance Grid
 
+**Reality's source code: Γ-operator validated across 24 orders of magnitude.**
+
+## Production Tools
+```bash
+pip install -e .
+phi-resonance /path/to/repo --psi-path  # Codebase analysis (r²=0.87 adoption prediction)    # Φ-Resonance Grid
+
 **Mathematical structure analysis. Consciousness physics synthesis.**
 
 ## Empirical Results
