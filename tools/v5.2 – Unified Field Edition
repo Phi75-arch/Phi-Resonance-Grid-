@@ -1,0 +1,96 @@
+#!/usr/bin/env python3
+"""
+Φ-Resonance Scanner v5.2 – Unified Field Edition
+Core Φ-metrics + Ψion-path detection + UC-EFT resonance scoring
+"""
+
+import ast
+import argparse
+from pathlib import Path
+from dataclasses import dataclass
+from collections import Counter
+import json
+import statistics
+
+PHI = (1 + 5**0.5) / 2  # 1.618...
+
+@dataclass
+class ResonanceMetrics:
+    phi_er: float
+    resonance_ratio: float
+    psi_path_score: float
+    node_potential: str
+    harmonic_functions: int
+
+class UnifiedAnalyzer(ast.NodeVisitor):
+    def __init__(self):
+        self.function_complexities = []
+        self.psi_signals = []
+    
+    def visit_FunctionDef(self, node):
+        complexity = len(ast.walk(node))
+        self.function_complexities.append(complexity)
+        
+        # Ψion-path signals (v5.2)
+        self._detect_psi_patterns(node)
+        self.generic_visit(node)
+    
+    def _detect_psi_patterns(self, node):
+        """UC-EFT resonance signatures"""
+        for child in ast.walk(node):
+            if isinstance(child, ast.Constant):
+                if abs(child.value - PHI) < 0.01 or child.value in [1, 1, 2, 3, 5, 8, 13]:
+                    self.psi_signals.append('harmonic_constant')
+            if isinstance(child, ast.Name) and child.id in ['self', 'node', 'resonance']:
+                self.psi_signals.append('resonance_keyword')
+    
+    def compute_metrics(self):
+        if not self.function_complexities:
+            return ResonanceMetrics(0, 0, 0, "empty", 0)
+        
+        complexities = self.function_complexities
+        phi_er = statistics.mean(complexities) / statistics.median(complexities)
+        harmonic_count = sum(1 for c in complexities if 6 <= c <= 13)
+        resonance_ratio = harmonic_count / len(complexities)
+        psi_score = len(self.psi_signals) / len(complexities) if complexities else 0
+        
+        status = "PSI-PATH" if psi_score > 0.8 else "RESONANT" if phi_er < 1.65 else "DISSONANT"
+        
+        return ResonanceMetrics(
+            phi_er=round(phi_er, 3),
+            resonance_ratio=round(resonance_ratio, 3),
+            psi_path_score=round(psi_score, 3),
+            node_potential=status,
+            harmonic_functions=harmonic_count
+        )
+
+def scan_path(path: Path) -> ResonanceMetrics:
+    analyzer = UnifiedAnalyzer()
+    
+    for py_file in path.rglob("*.py"):
+        try:
+            tree = ast.parse(py_file.read_text())
+            analyzer.visit(tree)
+        except:
+            continue
+    
+    return analyzer.compute_metrics()
+
+def main():
+    parser = argparse.ArgumentParser(description="Φ-Resonance Scanner v5.2")
+    parser.add_argument("path", type=Path)
+    parser.add_argument("--psi-path", action="store_true", help="Enable Ψion-path detection")
+    args = parser.parse_args()
+    
+    metrics = scan_path(args.path)
+    
+    print(f"""
+Φ-ER: {metrics.phi_er} (ideal: {PHI:.3f})
+Status: {metrics.node_potential}
+Resonance Ratio: {metrics.resonance_ratio:.1%}
+Ψ-Path Score: {metrics.psi_path_score:.1%}
+Harmonic Functions: {metrics.harmonic_functions}
+    """)
+
+if __name__ == "__main__":
+    main()
