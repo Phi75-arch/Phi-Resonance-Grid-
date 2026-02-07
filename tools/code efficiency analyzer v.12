@@ -1,0 +1,207 @@
+#!/usr/bin/env python3
+"""
+CodeEfficiencyAnalyzer v12.0 – With Rust Support via Tree-Sitter
+New Features:
+- Added Rust support: '.rs' files parsed with tree-sitter-rust
+- Adapted UniversalVisitor for Rust node types (e.g., if_expression, function_item, unsafe_block)
+- Generalized metrics for Rust: Control flow, functions, operators, identifiers, attributes
+- Security: Flags 'unsafe' blocks, potential vulns via text patterns
+- Note: Dynamic analysis remains Python-only; Rust files get static metrics only
+- User must install tree-sitter-rust and build the shared lib (see comments)
+"""
+
+import ast
+import hashlib
+import json
+import os
+import sys
+import gc
+import timeit
+import re
+import difflib
+import yaml
+import numpy as np
+from collections import Counter, defaultdict
+from concurrent.futures import ProcessPoolExecutor, as_completed
+from dataclasses import dataclass, asdict
+from functools import partial, lru_cache
+from typing import Any, Dict, List, Tuple, Optional
+import tracemalloc
+from sklearn.linear_model import RANSACRegressor
+from sklearn.cluster import DBSCAN
+from html import escape
+from tree_sitter import Language, Parser  # For multi-lang
+
+sys.setrecursionlimit(5000)
+
+# Expanded Constants
+VULN_FUNCS = frozenset({'exec', 'eval', '__import__', 'compile', 'open', 'input', 'system', 'spawn'})  # Added Rust-relevant
+VULN_ATTRS = frozenset({'system', 'popen', 'spawn', 'call', 'Popen', 'run', 'check_output', 'load', 'loads'})
+DANGEROUS = frozenset({'os', 'subprocess', 'shlex', 'commands', 'pickle', 'yaml', 'json', 'requests', 'std::process'})
+
+SECRETS_PATTERNS = [
+    re.compile(r'(?i)api_key\s*=\s*["\']([a-zA-Z0-9_\-]{20,})["\']'),
+    re.compile(r'(?i)password\s*=\s*["\'](.+?)["\']'),
+    re.compile(r'(?i)secret\s*=\s*["\']([a-zA-Z0-9_\-]{32,})["\']'),
+]
+
+# Language-specific configs
+LANGUAGE_PARSERS = {
+    '.py': 'python',
+    '.js': 'javascript',
+    '.java': 'java',
+    '.cpp': 'cpp',
+    '.rs': 'rust',  # New: Rust support
+}
+
+# Load tree-sitter languages (user must install tree-sitter-<lang> and build shared lib)
+# Example build: git clone https://github.com/tree-sitter/tree-sitter-rust; cd tree-sitter-rust; cargo build --release; cp target/release/libtree_sitter_rust.so /path/to/build/my-languages.so
+TS_LANGUAGES = {}
+for lang in set(LANGUAGE_PARSERS.values()):
+    try:
+        TS_LANGUAGES[lang] = Language('build/my-languages.so', lang)  # Adjust path to shared lib
+    except Exception as e:
+        print(f"Warning: Tree-sitter language {lang} not loaded: {e}", file=sys.stderr)
+
+COG_WEIGHTS = {  # Generalized
+    'If': 1, 'For': 1, 'While': 1, 'Try': 1, 'With': 1,
+    'Assert': 1, 'Lambda': 1, 'comprehension': 1, 'IfExp': 1,
+    'BoolOp': 0,
+    # Rust-specific approximations
+    'if_expression': 1, 'for_expression': 1, 'while_expression': 1, 'loop_expression': 1, 'match_expression': 1,
+}
+
+HALSTEAD_OPERATORS = frozenset({
+    'if', 'else', 'elif', 'for', 'while', 'try', 'except', 'finally', 'with', 'assert',
+    'def', 'class', 'return', 'yield', 'raise', 'break', 'continue', 'pass',
+    '+', '-', '*', '/', '%', '**', '//', '==', '!=', '<', '>', '<=', '>=',
+    'and', 'or', 'not', 'in', 'is', '&', '|', '^', '~', '<<', '>>',
+    '=', '+=', '-=', '*=', '/=', '%=', '**=', '//=',
+    # Rust ops
+    '&&', '||', '!', 'as', 'mod', 'ref', 'mut',
+})
+
+@dataclass(frozen=True)
+class Metrics:
+    cc: int = 1
+    cog: int = 0
+    max_nest: int = 0
+    operators: int = 0
+    unique_operators: int = 0
+    operands: int = 0
+    unique_operands: int = 0
+    vulns: tuple = ()
+    secrets: tuple = ()
+    smells: tuple = ()
+    type_issues: tuple = ()
+    loc: int = 0
+    duplication: float = 0.0
+    unused: tuple = ()
+
+class UniversalVisitor:
+    __slots__ = (
+        'cc', 'cog', 'nest', 'cur_nest',
+        'ops_count', 'ops_unique',
+        'opnds_count', 'opnds_unique',
+        'vulns', 'secrets', 'smells', 'types',
+        'loc', 'in_func', 'func_loc', 'param_count',
+        'detailed_cc', 'lines', 'dupe_sequences',
+        'unused_vars', 'used_names', 'defined_names',
+        'config', 'code_lines', 'language'
+    )
+
+    def __init__(self, detailed=False, config: Dict = None, code_lines: List[str] = None, language: str = 'python'):
+        self.cc = 1
+        self.cog = 0
+        self.nest = 0
+        self.cur_nest = 0
+        self.ops_count = 0
+        self.ops_unique = set()
+        self.opnds_count = 0
+        self.opnds_unique = set()
+        self.vulns = set()
+        self.secrets = set()
+        self.smells = set()
+        self.types = set()
+        self.loc = len(code_lines)
+        self.in_func = False
+        self.func_loc = 0
+        self.param_count = 0
+        self.detailed_cc = defaultdict(int) if detailed else None
+        self.lines = defaultdict(list) if detailed else None
+        self.dupe_sequences = []
+        self.unused_vars = set()
+        self.used_names = set()
+        self.defined_names = set()
+        self.config = config or {}
+        self.code_lines = code_lines or []
+        self.language = language
+
+    def visit_tree(self, node, depth=0, line=1):
+        """Generalized visit for ast or tree-sitter nodes"""
+        if self.language == 'python' and isinstance(node, ast.AST):
+            self._visit_python_ast(node)
+        else:
+            self._visit_ts_node(node, depth, line)
+
+    def _visit_python_ast(self, node):
+        # From v11/v10 Python logic (abbreviated)
+        node_type = type(node).__name__
+        if node_type in COG_WEIGHTS:
+            self.cc += 1
+            self.cog += COG_WEIGHTS[node_type] + self.cur_nest
+            self.cur_nest += 1
+            self.nest = max(self.nest, self.cur_nest)
+        # ... (full logic: halstead, vulns, smells, etc. as before)
+        for child in ast.iter_child_nodes(node):
+            self.visit_tree(child)
+        if node_type in ['If', 'For', 'While', 'Try', 'With', 'Assert', 'IfExp', 'Lambda']:
+            self.cur_nest -= 1
+
+    def _visit_ts_node(self, node, depth, line):
+        node_type = node.type
+        # Generalized for multi-lang, with Rust specifics
+        control_flow_types = {
+            'if_expression', 'while_expression', 'for_expression', 'loop_expression', 'match_expression',  # Rust
+            'if_statement', 'for_statement', 'while_statement', 'try_statement',  # Others
+        }
+        if node_type in control_flow_types:
+            self.cc += 1
+            self.cog += 1 + self.cur_nest
+            self.cur_nest += 1
+            self.nest = max(self.nest, self.cur_nest + depth)
+
+        func_types = {'function_item', 'function_definition'}  # Rust 'function_item'
+        if node_type in func_types:
+            self.in_func = True
+            # Approximate param count
+            params = [c for c in node.children if c.type == 'parameters']
+            self.param_count = len(params[0].children) if params else 0
+            if self.param_count > self.config.get('max_params', 7):
+                self.smells.add('long_param_list')
+
+        # Halstead
+        if node_type in HALSTEAD_OPERATORS or 'operator' in node_type:
+            self.ops_unique.add(node_type)
+            self.ops_count += 1
+        if node_type in {'identifier', 'scoped_identifier'}:
+            text = node.text.decode('utf-8') if node.text else ''
+            self.opnds_unique.add(text)
+            self.opnds_count += 1
+
+        # Security & Vulns
+        if 'call' in node_type or node_type == 'call_expression':
+            text = node.text.decode('utf-8') if node.text else ''
+            if any(f in text for f in VULN_FUNCS):
+                self.vulns.add(f"Potential vuln call: {text[:50]}")
+        if node_type == 'unsafe_block':
+            self.vulns.add('unsafe_block')
+            self.smells.add('unsafe_rust_code')
+
+        # Secrets (line-based)
+        if node.start_point and self.code_lines:
+            ln = node.start_point[0]
+            line_text = self.code_lines[ln]
+            for pat in SECRETS_PATTERNS:
+                if match := pat.search(line_text):
+                    self.secrets.add(f"Potential secret at line {ln+1}: {match.group
