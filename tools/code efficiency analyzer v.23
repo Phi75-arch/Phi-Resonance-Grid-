@@ -1,0 +1,118 @@
+#!/usr/bin/env python3
+"""
+CodeEfficiencyAnalyzer v23 – 2026 competitive single-file + dir mode
+"""
+
+import ast, os, sys, re, json, difflib, shutil, subprocess as sp
+from dataclasses import dataclass, asdict, field
+from typing import List, Tuple, Dict
+from collections import Counter
+
+sys.setrecursionlimit(4000)
+
+VULN_PATTERNS = {
+    'rust': [
+        (r'unsafe\s*{[^}]*}',               'unsafe block'),
+        (r'\*\s*(const\s+)?mut\s',          'raw pointer'),
+        (r'panic!\(',                       'unhandled panic'),
+        (r'thread::spawn\([^)]*?\)\s*(?![^.]*\.join)', 'spawn without join'),
+        (r'env::var\(',                     'untrusted env var'),
+        (r'Arc\s*<\s*Mutex\s*<',            'Arc<Mutex> → prefer parking_lot or crossbeam'),
+        (r'RefCell\s*<\s*RefCell',          'nested RefCell → borrow loop risk'),
+        (r'transmute\s*<',                  'unsafe transmute'),
+    ]
+}
+
+@dataclass
+class Metrics:
+    cc: int = 1
+    loc: int = 0
+    vulns: List[str] = field(default_factory=list)
+    smells: List[str] = field(default_factory=list)
+    fixed: List[str] = field(default_factory=list)
+    suggestions: List[str] = field(default_factory=list)
+    score: float = 0.0  # 0–100
+
+class CEA:
+    def __init__(self, path: str, autofix: bool = False, dry_run: bool = False):
+        self.path = path
+        self.autofix = autofix
+        self.dry_run = dry_run
+        self.metrics = Metrics()
+
+    def analyze_file(self):
+        if not os.path.isfile(self.path):
+            return
+
+        ext = os.path.splitext(self.path)[1].lower()
+        self.metrics.loc = sum(1 for _ in open(self.path))
+
+        code = open(self.path).read()
+
+        # Basic CC approximation (very rough)
+        self.metrics.cc = code.count('if ') + code.count('for ') + code.count('while ') + code.count('match ') + 1
+
+        # Vuln scan
+        if ext == '.rs':
+            for pat, label in VULN_PATTERNS['rust']:
+                if re.search(pat, code):
+                    self.metrics.vulns.append(label)
+
+        # Simple smell heuristics
+        if len(code.splitlines()) > 400:
+            self.metrics.smells.append("file too long (>400 LOC)")
+        if code.count('unwrap()') > 3:
+            self.metrics.smells.append("excessive unwrap() – prefer ? or match")
+
+        # Suggestions
+        if self.metrics.cc > 12:
+            self.metrics.suggestions.append("split complex function")
+        if any("unsafe" in v for v in self.metrics.vulns):
+            self.metrics.suggestions.append("minimize unsafe; prefer safe abstractions")
+
+        self.metrics.score = max(0, 100 - len(self.metrics.vulns)*15 - len(self.metrics.smells)*8 - (self.metrics.cc-5)*2)
+
+    def rectify(self):
+        if not self.autofix:
+            return
+
+        backup = self.path + '.bak'
+        shutil.copy(self.path, backup)
+
+        with open(self.path) as f:
+            lines = f.readlines()
+
+        changed = False
+        for i, line in enumerate(lines):
+            if 'unsafe {' in line and not line.strip().startswith('//'):
+                lines[i] = f"// CEA FIXED unsafe: {line}"
+                self.metrics.fixed.append("commented unsafe block")
+                changed = True
+
+        if changed and not self.dry_run:
+            with open(self.path, 'w') as f:
+                f.writelines(lines)
+
+    def run(self):
+        if os.path.isdir(self.path):
+            for root, _, files in os.walk(self.path):
+                for f in files:
+                    if f.endswith(('.rs', '.py', '.go', '.java', '.cpp', '.ts')):
+                        CEA(os.path.join(root, f), self.autofix, self.dry_run).run()
+            return
+
+        self.analyze_file()
+        self.rectify()
+
+        print(json.dumps(asdict(self.metrics), indent=2))
+        print(f"\nQuality score: {self.metrics.score:.1f}/100")
+
+if __name__ == '__main__':
+    import argparse
+    p = argparse.ArgumentParser()
+    p.add_argument('path', help='file or directory')
+    p.add_argument('--autofix', action='store_true')
+    p.add_argument('--dry-run', action='store_true')
+    args = p.parse_args()
+
+    CEA(args.path, args.autofix, args.dry_run).run()
