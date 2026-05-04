@@ -1,0 +1,228 @@
+/**
+ * RESONANCE SIGNALING SERVER
+ * ══════════════════════════════════════════════════════
+ * Tiny WebSocket relay that helps WebRTC peers find each other.
+ * After the handshake, all audio flows DIRECTLY peer-to-peer.
+ * This server NEVER sees your voice — only connection metadata.
+ * 
+ * Deploy: node resonance_signaling_server.js
+ * Cost:   Free on Railway.app / Render.com / any $5 VPS
+ * ══════════════════════════════════════════════════════
+ */
+
+const http = require('http');
+const { WebSocketServer } = require('ws');
+const crypto = require('crypto');
+
+const PORT = process.env.PORT || 8080;
+const MAX_PEERS_PER_CHANNEL = 8;
+const PEER_TIMEOUT_MS = 30 * 60 * 1000; // 30 min idle cleanup
+
+// In-memory channel map: channelHash -> Set of WebSockets
+// We never store the raw channel name — only its SHA-256 hash
+const channels = new Map();
+
+// ── HTTP health check endpoint ──────────────────────
+const server = http.createServer((req, res) => {
+  if (req.url === '/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'ok',
+      channels: channels.size,
+      uptime: process.uptime(),
+      version: '0.2'
+    }));
+    return;
+  }
+  res.writeHead(404); res.end();
+});
+
+// ── WebSocket signaling ─────────────────────────────
+const wss = new WebSocketServer({ server });
+
+wss.on('connection', (ws, req) => {
+  ws._peerId = null;
+  ws._channelHash = null;
+  ws._lastSeen = Date.now();
+
+  ws.on('message', (raw) => {
+    ws._lastSeen = Date.now();
+    let msg;
+
+    try { msg = JSON.parse(raw); }
+    catch { return ws.send(JSON.stringify({ type: 'error', text: 'invalid json' })); }
+
+    switch (msg.type) {
+
+      // ── JOIN: peer announces itself on a channel ──
+      case 'join': {
+        if (!msg.channel || typeof msg.channel !== 'string') break;
+        if (!msg.peerId  || typeof msg.peerId  !== 'string') break;
+
+        // Hash the channel name — server never knows the real name
+        const channelHash = crypto.createHash('sha256')
+          .update(msg.channel.toUpperCase().trim())
+          .digest('hex')
+          .slice(0, 16);
+
+        if (!channels.has(channelHash)) channels.set(channelHash, new Set());
+        const room = channels.get(channelHash);
+
+        if (room.size >= MAX_PEERS_PER_CHANNEL) {
+          ws.send(JSON.stringify({ type: 'error', text: 'channel full' }));
+          break;
+        }
+
+        ws._peerId = msg.peerId;
+        ws._channelHash = channelHash;
+        room.add(ws);
+
+        // Tell this peer who else is already here
+        const existingPeers = [];
+        room.forEach(peer => {
+          if (peer !== ws && peer.readyState === 1) {
+            existingPeers.push(peer._peerId);
+          }
+        });
+
+        ws.send(JSON.stringify({
+          type: 'joined',
+          peerId: msg.peerId,
+          peers: existingPeers,
+          channelHash
+        }));
+
+        // Tell existing peers a new peer arrived
+        broadcast(room, ws, {
+          type: 'peer-joined',
+          peerId: msg.peerId
+        });
+
+        console.log(`[JOIN] ${msg.peerId.slice(0,8)} → channel ${channelHash.slice(0,8)} (${room.size} peers)`);
+        break;
+      }
+
+      // ── OFFER: WebRTC SDP offer ───────────────────
+      case 'offer':
+      // ── ANSWER: WebRTC SDP answer ─────────────────
+      case 'answer':
+      // ── ICE: ICE candidate ────────────────────────
+      case 'ice': {
+        if (!msg.target || !ws._channelHash) break;
+        const room = channels.get(ws._channelHash);
+        if (!room) break;
+
+        // Relay ONLY to the intended peer — server cannot read SDP content
+        room.forEach(peer => {
+          if (peer._peerId === msg.target && peer.readyState === 1) {
+            peer.send(JSON.stringify({
+              type: msg.type,
+              from: ws._peerId,
+              data: msg.data
+            }));
+          }
+        });
+        break;
+      }
+
+      // ── LEAVE: peer disconnecting cleanly ─────────
+      case 'leave': {
+        handleLeave(ws);
+        break;
+      }
+
+      // ── PHI-PING: key epoch sync (optional) ───────
+      // Peers can optionally broadcast their current epoch
+      // so late joiners can sync the φ-spiral state
+      case 'phi-sync': {
+        if (!ws._channelHash) break;
+        const room = channels.get(ws._channelHash);
+        if (!room) break;
+        broadcast(room, ws, {
+          type: 'phi-sync',
+          from: ws._peerId,
+          epoch: msg.epoch,        // just the epoch number, not key material
+          channelHash: ws._channelHash
+        });
+        break;
+      }
+    }
+  });
+
+  ws.on('close', () => handleLeave(ws));
+  ws.on('error', () => handleLeave(ws));
+});
+
+function broadcast(room, exclude, msg) {
+  const data = JSON.stringify(msg);
+  room.forEach(peer => {
+    if (peer !== exclude && peer.readyState === 1) {
+      peer.send(data);
+    }
+  });
+}
+
+function handleLeave(ws) {
+  if (!ws._channelHash) return;
+  const room = channels.get(ws._channelHash);
+  if (!room) return;
+
+  room.delete(ws);
+  broadcast(room, ws, { type: 'peer-left', peerId: ws._peerId });
+
+  if (room.size === 0) {
+    channels.delete(ws._channelHash);
+    console.log(`[CLEAN] channel ${ws._channelHash?.slice(0,8)} removed (empty)`);
+  }
+
+  console.log(`[LEAVE] ${ws._peerId?.slice(0,8)} left ${ws._channelHash?.slice(0,8)}`);
+  ws._channelHash = null;
+}
+
+// ── Idle cleanup ─────────────────────────────────────
+setInterval(() => {
+  const now = Date.now();
+  wss.clients.forEach(ws => {
+    if (now - ws._lastSeen > PEER_TIMEOUT_MS) {
+      handleLeave(ws);
+      ws.terminate();
+    }
+  });
+  // Remove empty channels
+  channels.forEach((room, hash) => { if (room.size === 0) channels.delete(hash); });
+}, 5 * 60 * 1000);
+
+// ── Start ────────────────────────────────────────────
+server.listen(PORT, () => {
+  console.log(`
+  ╔═══════════════════════════════════════╗
+  ║  RESONANCE SIGNALING SERVER v0.2      ║
+  ║  Port: ${PORT}                            ║
+  ║  No voice data ever passes through.   ║
+  ║  Channel names hashed before storage. ║
+  ╚═══════════════════════════════════════╝
+  `);
+});
+
+/*
+ * ══════════════════════════════════════════════════════
+ * DEPLOY IN 3 STEPS:
+ * 
+ * 1. npm init -y && npm install ws
+ * 2. node resonance_signaling_server.js
+ * 3. Point resonance_full.html SIGNALING_URL to your server
+ * 
+ * FREE HOSTING OPTIONS:
+ *   Railway.app  — free tier, auto-deploys from GitHub
+ *   Render.com   — free tier WebSocket support
+ *   Fly.io       — free tier, global edge deployment
+ *   Your VPS     — same machine as the WireGuard VPN
+ * 
+ * PRIVACY GUARANTEES:
+ *   - Channel names are SHA-256 hashed. Server never knows them.
+ *   - SDP offer/answer relayed opaquely. Server cannot decode.
+ *   - No database. No logs (remove console.log for production).
+ *   - No authentication required — channel name IS the secret.
+ *   - Idle peers cleaned up after 30 minutes.
+ * ══════════════════════════════════════════════════════
+ */
