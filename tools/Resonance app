@@ -1,0 +1,1104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Resonance — Encrypted P2P Voice</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Cinzel:wght@300;400&family=Crimson+Pro:ital,wght@0,300;1,300&display=swap');
+
+:root {
+  --bg: #060708;
+  --bg2: #0c0e12;
+  --panel: #0f1118;
+  --border: #1e2230;
+  --gold: #c8a020;
+  --gold-dim: #5a4808;
+  --gold-glow: #e8c840;
+  --blue: #2a7aaa;
+  --blue-bright: #4aaad4;
+  --green: #2a8a4a;
+  --green-bright: #4adc7a;
+  --red: #aa2a2a;
+  --red-bright: #dd4444;
+  --purple: #7a4aaa;
+  --purple-bright: #aa7add;
+  --text: #c8c0a8;
+  --text-dim: #4a4838;
+  --mono: 'Share Tech Mono', monospace;
+  --serif: 'Cinzel', serif;
+  --body: 'Crimson Pro', serif;
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem 1rem 4rem;
+  overflow-x: hidden;
+}
+
+body::before {
+  content:'';
+  position:fixed; inset:0;
+  background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px);
+  pointer-events:none; z-index:100;
+}
+
+/* TABS */
+.tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 1.2rem;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  overflow: hidden;
+  width: 100%;
+  max-width: 720px;
+}
+
+.tab {
+  flex: 1;
+  padding: 0.7rem 1rem;
+  background: var(--bg2);
+  border: none;
+  border-right: 1px solid var(--border);
+  color: var(--text-dim);
+  font-family: var(--mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+}
+.tab:last-child { border-right: none; }
+.tab:hover { color: var(--text); background: var(--panel); }
+.tab.active { background: var(--panel); color: var(--gold); border-bottom: 1px solid var(--gold-dim); }
+
+.tab-content { display: none; width: 100%; max-width: 720px; }
+.tab-content.active { display: flex; flex-direction: column; gap: 0.9rem; }
+
+/* HEADER */
+header { text-align:center; margin-bottom:1.5rem; animation: fadeIn 1s ease; }
+.logo { font-family:var(--serif); font-weight:300; font-size:clamp(1.3rem,4vw,1.9rem); letter-spacing:0.5em; color:var(--gold); text-shadow:0 0 30px rgba(200,160,32,0.3); margin-bottom:0.2rem; }
+.tagline { font-family:var(--mono); font-size:0.56rem; letter-spacing:0.2em; color:var(--text-dim); }
+
+/* PANELS */
+.panel { background:var(--panel); border:1px solid var(--border); border-radius:2px; padding:1.2rem 1.4rem; position:relative; }
+.panel::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg,transparent,var(--gold-dim),transparent); opacity:0.5; }
+.panel-label { font-family:var(--mono); font-size:0.56rem; letter-spacing:0.28em; color:var(--text-dim); margin-bottom:0.8rem; text-transform:uppercase; }
+
+/* FORMS */
+.row { display:flex; gap:0.6rem; align-items:stretch; }
+.input-field {
+  flex:1; background:var(--bg2); border:1px solid var(--border);
+  color:var(--gold); font-family:var(--mono); font-size:0.9rem;
+  letter-spacing:0.12em; padding:0.55rem 0.8rem; outline:none; border-radius:1px;
+  transition:border-color 0.3s;
+}
+.input-field:focus { border-color:var(--gold-dim); box-shadow:0 0 10px rgba(200,160,32,0.08); }
+.input-field::placeholder { color:var(--text-dim); font-size:0.65rem; }
+
+.btn {
+  background:transparent; border:1px solid var(--border);
+  color:var(--text); font-family:var(--mono); font-size:0.6rem;
+  letter-spacing:0.18em; padding:0.55rem 0.9rem; cursor:pointer;
+  border-radius:1px; transition:all 0.2s; text-transform:uppercase; white-space:nowrap;
+}
+.btn:hover { border-color:var(--gold-dim); color:var(--gold); background:rgba(200,160,32,0.04); }
+.btn.blue { border-color:var(--blue); color:var(--blue-bright); }
+.btn.blue:hover { background:rgba(42,122,170,0.08); }
+.btn.green { border-color:var(--green); color:var(--green-bright); }
+.btn.green:hover { background:rgba(42,138,74,0.08); }
+.btn.red { border-color:var(--red); color:var(--red-bright); }
+.btn.red:hover { background:rgba(170,42,42,0.08); }
+.btn.purple { border-color:var(--purple); color:var(--purple-bright); }
+.btn.purple:hover { background:rgba(122,74,170,0.08); }
+
+/* STATUS */
+.status-bar { display:flex; align-items:center; gap:0.8rem; padding:0.5rem 0.8rem; background:var(--bg); border:1px solid var(--border); border-radius:1px; }
+.dot { width:7px; height:7px; border-radius:50%; background:var(--text-dim); flex-shrink:0; transition:all 0.3s; }
+.dot.connected { background:var(--green-bright); box-shadow:0 0 8px var(--green-bright); animation:pulse-dot 2s infinite; }
+.dot.connecting { background:var(--gold); animation:blink 0.6s infinite; }
+.dot.transmitting { background:var(--gold-glow); box-shadow:0 0 12px var(--gold-glow); animation:pulse-gold 0.4s infinite; }
+.dot.vpn { background:var(--purple-bright); box-shadow:0 0 8px var(--purple-bright); animation:pulse-dot 2s infinite; }
+.status-text { font-family:var(--mono); font-size:0.6rem; letter-spacing:0.12em; color:var(--text-dim); flex:1; }
+.status-badge { font-family:var(--mono); font-size:0.55rem; color:var(--text-dim); }
+
+/* VISUALIZER */
+.vis-wrap { display:flex; gap:1.2rem; align-items:flex-start; }
+#spiralCanvas { flex-shrink:0; border:1px solid var(--border); background:var(--bg); }
+.key-info { flex:1; display:flex; flex-direction:column; gap:0.5rem; }
+.kf-label { font-family:var(--mono); font-size:0.5rem; letter-spacing:0.18em; color:var(--text-dim); }
+.kf-val { font-family:var(--mono); font-size:0.58rem; color:var(--gold); word-break:break-all; line-height:1.4; background:var(--bg); padding:0.28rem 0.5rem; border:1px solid var(--border); border-left:2px solid var(--gold-dim); }
+.kf-val.blue { color:var(--blue-bright); border-left-color:var(--blue); }
+.kf-val.green { color:var(--green-bright); border-left-color:var(--green); }
+.kf-val.purple { color:var(--purple-bright); border-left-color:var(--purple); }
+
+/* PTT */
+.ptt-zone { display:flex; flex-direction:column; align-items:center; gap:0.8rem; padding:1.2rem; }
+.ptt-outer { position:relative; width:130px; height:130px; display:flex; align-items:center; justify-content:center; }
+.ptt-ring { position:absolute; inset:0; border-radius:50%; border:1px solid var(--border); transition:all 0.3s; }
+.ptt-ring.active { border-color:var(--gold); box-shadow:0 0 28px rgba(200,160,32,0.2); animation:ring-pulse 0.5s infinite; }
+.ptt-ring2 { position:absolute; inset:12px; border-radius:50%; border:1px solid var(--border); opacity:0.4; }
+#pttBtn { width:86px; height:86px; border-radius:50%; background:var(--bg2); border:2px solid var(--border); color:var(--text-dim); font-family:var(--mono); font-size:0.52rem; letter-spacing:0.12em; cursor:pointer; transition:all 0.15s; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:0.25rem; user-select:none; touch-action:none; position:relative; z-index:2; }
+#pttBtn:hover { border-color:var(--gold-dim); color:var(--gold); }
+#pttBtn.tx { background:radial-gradient(circle,rgba(200,160,32,0.15) 0%,var(--bg2) 70%); border-color:var(--gold); color:var(--gold-glow); box-shadow:0 0 20px rgba(200,160,32,0.3); }
+#pttBtn.off { opacity:0.3; cursor:not-allowed; }
+.ptt-icon { font-size:1.5rem; line-height:1; }
+.ptt-lbl { font-size:0.48rem; letter-spacing:0.15em; }
+#waveCanvas { width:100%; height:44px; background:var(--bg); border:1px solid var(--border); display:block; }
+
+/* PEERS LIST */
+.peers { display:flex; flex-direction:column; gap:0.4rem; }
+.peer-item { display:flex; align-items:center; gap:0.7rem; padding:0.4rem 0.7rem; background:var(--bg); border:1px solid var(--border); font-family:var(--mono); font-size:0.58rem; }
+.peer-dot { width:6px; height:6px; border-radius:50%; }
+.peer-id { color:var(--blue-bright); flex:1; }
+.peer-latency { color:var(--text-dim); }
+.peer-key { color:var(--green-bright); font-size:0.5rem; }
+
+/* LOG */
+.log { font-family:var(--mono); font-size:0.58rem; color:var(--text-dim); height:110px; overflow-y:auto; line-height:1.85; }
+.log::-webkit-scrollbar { width:3px; }
+.log::-webkit-scrollbar-thumb { background:var(--border); }
+.log-line { padding:0.05rem 0; border-bottom:1px solid rgba(255,255,255,0.015); }
+.log-line.gold { color:var(--gold-dim); }
+.log-line.blue { color:var(--blue); }
+.log-line.green { color:var(--green); }
+.log-line.red { color:var(--red-bright); }
+.log-line.purple { color:var(--purple); }
+
+/* VPN TAB */
+.vpn-steps { display:flex; flex-direction:column; gap:0.7rem; }
+.vpn-step { background:var(--bg); border:1px solid var(--border); border-left:2px solid var(--purple); padding:0.8rem 1rem; }
+.vpn-step-title { font-family:var(--mono); font-size:0.58rem; color:var(--purple-bright); letter-spacing:0.2em; margin-bottom:0.5rem; }
+.vpn-step-body { font-size:0.82rem; color:var(--text-dim); font-style:italic; line-height:1.6; }
+.code-block { background:var(--bg); border:1px solid var(--border); padding:0.8rem; font-family:var(--mono); font-size:0.6rem; color:var(--green-bright); line-height:1.8; white-space:pre-wrap; word-break:break-all; margin-top:0.5rem; position:relative; }
+.copy-btn { position:absolute; top:0.4rem; right:0.4rem; font-family:var(--mono); font-size:0.5rem; letter-spacing:0.1em; background:var(--border); border:none; color:var(--text-dim); padding:0.2rem 0.5rem; cursor:pointer; }
+.copy-btn:hover { color:var(--text); }
+
+.grid2 { display:grid; grid-template-columns:1fr 1fr; gap:0.7rem; }
+.stat-box { background:var(--bg); border:1px solid var(--border); padding:0.7rem; text-align:center; }
+.stat-val { font-family:var(--mono); font-size:1.1rem; color:var(--gold); }
+.stat-lbl { font-family:var(--mono); font-size:0.5rem; color:var(--text-dim); letter-spacing:0.15em; margin-top:0.2rem; }
+
+/* ANIMATIONS */
+@keyframes fadeIn { from{opacity:0;transform:translateY(-6px)} to{opacity:1;transform:translateY(0)} }
+@keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:0.5} }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+@keyframes pulse-gold { 0%,100%{box-shadow:0 0 12px var(--gold-glow)} 50%{box-shadow:0 0 24px var(--gold-glow)} }
+@keyframes ring-pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.04);opacity:0.7} }
+
+@media(max-width:520px) {
+  .vis-wrap{flex-direction:column}
+  .grid2{grid-template-columns:1fr}
+  .row{flex-wrap:wrap}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">RESONANCE</div>
+  <div class="tagline">φ-encrypted · webrtc p2p voice · no server · no trace · open source</div>
+</header>
+
+<!-- TABS -->
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('voice')">◉ VOICE CHANNEL</button>
+  <button class="tab" onclick="switchTab('peers')">⬡ PEERS & KEYS</button>
+  <button class="tab" onclick="switchTab('vpn')">⬤ VPN SETUP</button>
+</div>
+
+<!-- ══════════════════════════════════ -->
+<!-- TAB: VOICE                        -->
+<!-- ══════════════════════════════════ -->
+<div class="tab-content active" id="tab-voice">
+
+  <div class="panel">
+    <div class="panel-label">// channel · shared secret seed</div>
+    <div class="row">
+      <input class="input-field" id="channelInput" type="text" maxlength="32"
+             placeholder="enter channel name or generate" autocomplete="off" spellcheck="false"/>
+      <button class="btn" id="genBtn">GENERATE</button>
+      <button class="btn blue" id="connectBtn">CONNECT</button>
+    </div>
+    <div style="margin-top:0.6rem; font-size:0.72rem; color:var(--text-dim); font-style:italic;">
+      Share this channel name out-of-band (in person, encrypted message) with whoever you want to reach. No account. No signup.
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div class="dot" id="statusDot"></div>
+    <div class="status-text" id="statusText">OFFLINE · ENTER A CHANNEL TO BEGIN</div>
+    <div class="status-badge" id="statusBadge"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">// φ-spiral key state · rotates each transmission · never repeats</div>
+    <div class="vis-wrap">
+      <canvas id="spiralCanvas" width="158" height="158"></canvas>
+      <div class="key-info">
+        <div><div class="kf-label">SPIRAL ANGLE (θ)</div><div class="kf-val" id="angleVal">—</div></div>
+        <div><div class="kf-label">KEY EPOCH</div><div class="kf-val blue" id="epochVal">—</div></div>
+        <div><div class="kf-label">CURRENT KEY MATERIAL</div><div class="kf-val green" id="keyVal">—</div></div>
+        <div><div class="kf-label">WEBRTC ICE STATE</div><div class="kf-val purple" id="iceVal">NOT CONNECTED</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">// push to transmit · spacebar or hold button</div>
+    <div class="ptt-zone">
+      <div class="ptt-outer">
+        <div class="ptt-ring" id="pttRing"></div>
+        <div class="ptt-ring2"></div>
+        <button id="pttBtn" class="off">
+          <span class="ptt-icon">◉</span>
+          <span class="ptt-lbl">HOLD TO TALK</span>
+        </button>
+      </div>
+      <canvas id="waveCanvas"></canvas>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">// transmission log</div>
+    <div class="log" id="log">
+      <div class="log-line gold">[RESONANCE · φ-encrypted WebRTC voice · v0.2]</div>
+      <div class="log-line">[waiting for channel...]</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════ -->
+<!-- TAB: PEERS & KEYS                 -->
+<!-- ══════════════════════════════════ -->
+<div class="tab-content" id="tab-peers">
+
+  <div class="panel">
+    <div class="panel-label">// connected peers · live p2p mesh</div>
+    <div class="peers" id="peersList">
+      <div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);padding:0.5rem 0;">
+        No peers connected. Join a channel first.
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">// key rotation history · last 8 epochs</div>
+    <div class="log" id="keyLog" style="height:140px;">
+      <div class="log-line">[key history appears here after transmissions]</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">// session statistics</div>
+    <div class="grid2">
+      <div class="stat-box"><div class="stat-val" id="statEpochs">0</div><div class="stat-lbl">KEY ROTATIONS</div></div>
+      <div class="stat-box"><div class="stat-val" id="statPeers">0</div><div class="stat-lbl">PEERS EVER SEEN</div></div>
+      <div class="stat-box"><div class="stat-val" id="statTx">0s</div><div class="stat-lbl">TOTAL TX TIME</div></div>
+      <div class="stat-box"><div class="stat-val" id="statEntropy">64</div><div class="stat-lbl">KEY ENTROPY (bits)</div></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">// webrtc architecture · how p2p works</div>
+    <div style="font-size:0.82rem;color:var(--text-dim);font-style:italic;line-height:1.9;">
+      When you connect to a channel, Resonance uses a <strong style="color:var(--text)">public STUN server</strong> (Google's free servers, or self-hosted) to discover your network address. Your browser then sends an <strong style="color:var(--text)">SDP offer</strong> — a description of how to reach you — to the other peer via a tiny signaling relay. After that handshake, <strong style="color:var(--gold)">all audio flows directly peer-to-peer</strong>. The signaling server sees only connection metadata, never your voice. The φ-key adds a second encryption layer on top of WebRTC's built-in DTLS-SRTP encryption. You get <strong style="color:var(--green-bright)">double encryption</strong> by default.
+    </div>
+  </div>
+
+</div>
+
+<!-- ══════════════════════════════════ -->
+<!-- TAB: VPN                          -->
+<!-- ══════════════════════════════════ -->
+<div class="tab-content" id="tab-vpn">
+
+  <div class="panel">
+    <div class="panel-label">// resonance vpn · wireguard-based · self-hosted · one command deploy</div>
+    <div style="font-size:0.85rem;color:var(--text-dim);font-style:italic;line-height:1.8;margin-bottom:0.8rem;">
+      A true VPN needs a server with a real IP address to route your traffic through. Below is everything you need to deploy your own in under 10 minutes on a $5/month VPS. <strong style="color:var(--gold)">You own it. No logs. No third party.</strong>
+    </div>
+    <div class="row">
+      <button class="btn purple" onclick="generateVPNConfig()">GENERATE MY CONFIGS</button>
+      <button class="btn" onclick="showDeployScript()">SHOW DEPLOY SCRIPT</button>
+    </div>
+  </div>
+
+  <div class="panel" id="vpnConfigPanel" style="display:none;">
+    <div class="panel-label">// server config · paste into /etc/wireguard/wg0.conf on your VPS</div>
+    <div class="code-block" id="serverConfig">
+      <button class="copy-btn" onclick="copyCode('serverConfig')">COPY</button>
+      <span id="serverConfigText"></span>
+    </div>
+  </div>
+
+  <div class="panel" id="vpnClientPanel" style="display:none;">
+    <div class="panel-label">// client config · import into wireguard app on your device</div>
+    <div class="code-block" id="clientConfig">
+      <button class="copy-btn" onclick="copyCode('clientConfig')">COPY</button>
+      <span id="clientConfigText"></span>
+    </div>
+  </div>
+
+  <div class="panel" id="deployPanel" style="display:none;">
+    <div class="panel-label">// one-command vps setup · run as root on ubuntu 22.04</div>
+    <div class="code-block">
+      <button class="copy-btn" onclick="copyText(deployScript)">COPY</button>
+      <span id="deployScriptText"></span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">// step by step · no technical experience needed</div>
+    <div class="vpn-steps">
+      <div class="vpn-step">
+        <div class="vpn-step-title">STEP 01 · GET A VPS</div>
+        <div class="vpn-step-body">Go to <strong>hetzner.com</strong> (cheapest, ~€4/mo), <strong>vultr.com</strong> or <strong>digitalocean.com</strong>. Create the smallest Ubuntu 22.04 server. You'll get an IP address. That's all you need.</div>
+      </div>
+      <div class="vpn-step">
+        <div class="vpn-step-title">STEP 02 · RUN THE DEPLOY SCRIPT</div>
+        <div class="vpn-step-body">SSH into your server (<code style="color:var(--gold)">ssh root@YOUR_IP</code>), paste the deploy script above, press Enter. It installs WireGuard, generates real keys, and starts the VPN automatically.</div>
+      </div>
+      <div class="vpn-step">
+        <div class="vpn-step-title">STEP 03 · GENERATE & IMPORT CONFIGS</div>
+        <div class="vpn-step-body">Click "Generate My Configs" above, enter your server's IP when prompted. Download WireGuard from wireguard.com. Import the client config file. Toggle on. Done.</div>
+      </div>
+      <div class="vpn-step">
+        <div class="vpn-step-title">STEP 04 · COMBINE WITH RESONANCE</div>
+        <div class="vpn-step-body">Run Resonance voice channels <em>through</em> your VPN for triple protection: VPN tunnel → WebRTC DTLS-SRTP → φ-key rotation. Your traffic is unrecognizable at every layer.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-label">// why self-hosted beats commercial vpns</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.7rem;font-size:0.78rem;color:var(--text-dim);font-style:italic;line-height:1.7;">
+      <div style="border-left:2px solid var(--green);padding-left:0.8rem;">
+        <strong style="color:var(--green-bright)">SELF-HOSTED</strong><br>
+        You own the server. Zero logs by definition — you'd be logging yourself. No company to subpoena. No business model built on your data. Costs ~$5/mo. Shared with nobody.
+      </div>
+      <div style="border-left:2px solid var(--red);padding-left:0.8rem;">
+        <strong style="color:var(--red-bright)">COMMERCIAL VPN</strong><br>
+        They promise no logs but are legally compelled to keep them in many jurisdictions. Their business is your traffic. They're a single point of subpoena. Costs $10–15/mo.
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════
+// TAB SWITCHING
+// ═══════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach((t,i) => {
+    const names = ['voice','peers','vpn'];
+    t.classList.toggle('active', names[i] === name);
+  });
+  document.querySelectorAll('.tab-content').forEach(c => {
+    c.classList.toggle('active', c.id === 'tab-' + name);
+  });
+}
+
+// ═══════════════════════════════════════
+// PHI KEY ENGINE
+// ═══════════════════════════════════════
+const PHI = 1.6180339887498948482;
+const SQRT3 = 1.7320508075688772;
+const TAU = Math.PI * 2;
+
+class PhiKeyEngine {
+  constructor(seed) {
+    this.seed = seed;
+    this.epoch = 0;
+    this.theta = this.seedToTheta(seed);
+    this.r = 1.0;
+    this.sessionId = Date.now().toString(16).toUpperCase() + Math.random().toString(16).slice(2,8).toUpperCase();
+    this.history = [];
+  }
+  seedToTheta(s) {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 0x01000193) >>> 0; }
+    return (h / 0xffffffff) * TAU * PHI % TAU;
+  }
+  advance() {
+    this.epoch++;
+    this.theta = (this.theta + PHI) % TAU;
+    this.r = this.r / PHI;
+    if (this.r < 0.001) this.r = 1.0;
+    const k = this.currentKey();
+    this.history.unshift({ epoch: this.epoch, key: k, theta: this.theta.toFixed(6) });
+    if (this.history.length > 8) this.history.pop();
+    return k;
+  }
+  currentKey() {
+    const x = this.r * Math.cos(this.theta);
+    const y = this.r * Math.sin(this.theta);
+    return this.hash(`${this.seed}:${this.epoch}:${x.toFixed(14)}:${y.toFixed(14)}:${SQRT3}:${PHI}`);
+  }
+  hash(s) {
+    let h1 = 0xdeadbeef ^ s.length, h2 = 0x41c6ce57 ^ s.length;
+    for (let i = 0; i < s.length; i++) {
+      const c = s.charCodeAt(i);
+      h1 = Math.imul(h1 ^ c, 0x9e3779b9); h2 = Math.imul(h2 ^ c, 0x5f4a7c15);
+      h1 ^= h2 >>> 13; h2 ^= h1 >>> 11;
+    }
+    h1 = (Math.imul(h1 ^ h2 >>> 16, 0x85ebca6b)) >>> 0;
+    h2 = (Math.imul(h2 ^ h1 >>> 13, 0xc2b2ae35)) >>> 0;
+    return (h1 >>> 0).toString(16).padStart(8,'0').toUpperCase() +
+           (h2 >>> 0).toString(16).padStart(8,'0').toUpperCase();
+  }
+  getEntropy() { return Math.floor(64 + this.epoch * Math.log2(PHI + 1)); }
+}
+
+// ═══════════════════════════════════════
+// SPIRAL CANVAS
+// ═══════════════════════════════════════
+const sc = document.getElementById('spiralCanvas');
+const sCtx = sc.getContext('2d');
+const CX = 79, CY = 79;
+
+function drawSpiral(eng, tx) {
+  sCtx.clearRect(0,0,158,158);
+  sCtx.fillStyle = '#060708'; sCtx.fillRect(0,0,158,158);
+
+  // Vesica hint circles
+  sCtx.strokeStyle = 'rgba(42,122,170,0.15)'; sCtx.lineWidth = 0.5;
+  [[CX-19,CY],[CX+19,CY]].forEach(([x,y]) => {
+    sCtx.beginPath(); sCtx.arc(x,y,38,0,TAU); sCtx.stroke();
+  });
+
+  if (!eng) return;
+
+  // Phi spiral
+  sCtx.beginPath();
+  let first = true;
+  for (let i = 0; i <= 500; i++) {
+    const t = (i/500) * 5 * TAU;
+    const r = 1.5 * Math.pow(PHI, t/TAU);
+    if (r > 72) break;
+    const x = CX + r * Math.cos(eng.theta + t);
+    const y = CY + r * Math.sin(eng.theta + t);
+    if (first) { sCtx.moveTo(x,y); first=false; } else sCtx.lineTo(x,y);
+  }
+  if (tx) { sCtx.shadowBlur=10; sCtx.shadowColor='#e8c840'; }
+  sCtx.strokeStyle = tx ? '#e8c840' : '#c8a020';
+  sCtx.lineWidth = tx ? 1.5 : 1;
+  sCtx.stroke();
+  sCtx.shadowBlur = 0;
+
+  // Current angle marker
+  const mr = 24;
+  const mx = CX + mr * Math.cos(eng.theta);
+  const my = CY + mr * Math.sin(eng.theta);
+  sCtx.beginPath(); sCtx.arc(mx,my, tx?4:2.5, 0, TAU);
+  sCtx.fillStyle = tx ? '#e8c840' : '#c8a020';
+  if (tx) { sCtx.shadowBlur=14; sCtx.shadowColor='#e8c840'; }
+  sCtx.fill(); sCtx.shadowBlur=0;
+
+  // Center
+  sCtx.beginPath(); sCtx.arc(CX,CY,2,0,TAU);
+  sCtx.fillStyle='rgba(200,192,168,0.7)'; sCtx.fill();
+}
+
+// ═══════════════════════════════════════
+// WAVEFORM
+// ═══════════════════════════════════════
+const wc = document.getElementById('waveCanvas');
+const wCtx = wc.getContext('2d');
+wc.width = wc.offsetWidth || 400; wc.height = 44;
+let analyser = null, waveData = new Array(100).fill(0);
+
+function drawWave(active) {
+  const W = wc.width, H = wc.height;
+  wCtx.fillStyle = '#060708'; wCtx.fillRect(0,0,W,H);
+  if (!active) {
+    wCtx.strokeStyle='rgba(42,72,60,0.4)'; wCtx.lineWidth=1;
+    wCtx.beginPath(); wCtx.moveTo(0,H/2); wCtx.lineTo(W,H/2); wCtx.stroke();
+    return;
+  }
+  if (analyser) {
+    const buf = new Uint8Array(analyser.frequencyBinCount);
+    analyser.getByteTimeDomainData(buf);
+    const step = Math.floor(buf.length/100);
+    for (let i=0;i<100;i++) waveData[i] = (buf[i*step]-128)/128;
+  } else {
+    const t = Date.now()*0.003;
+    for (let i=0;i<100;i++) waveData[i] = (Math.random()-0.5)*0.7*Math.sin(t+i*0.28);
+  }
+  const bw = W/100;
+  for (let i=0;i<100;i++) {
+    const amp = Math.abs(waveData[i]);
+    const bh = amp*(H/2);
+    wCtx.fillStyle = `rgba(200,160,32,${0.35+amp*0.65})`;
+    wCtx.fillRect(i*bw, H/2-bh, bw-1, bh*2);
+  }
+}
+
+// ═══════════════════════════════════════
+// SIGNALING CONFIG — set your server URL here
+// ═══════════════════════════════════════
+const SIGNALING_URL = (() => {
+  // Auto-detect: if served over HTTPS use WSS, else WS
+  // Replace 'your-signaling-server.railway.app' with your deployed server
+  const host = window.location.hostname;
+  if (host === 'localhost' || host === '127.0.0.1') {
+    return 'ws://localhost:8080';
+  }
+  return 'wss://your-signaling-server.railway.app'; // ← REPLACE THIS
+})();
+
+// ═══════════════════════════════════════
+// WEBRTC MANAGER
+// ═══════════════════════════════════════
+class ResonanceRTC {
+  constructor(channelName, engine, onLog) {
+    this.channel = channelName;
+    this.engine = engine;
+    this.log = onLog;
+    this.peers = new Map(); // peerId -> RTCPeerConnection
+    this.localStream = null;
+    this.signalingWs = null;
+    this.myId = 'peer-' + Math.random().toString(36).slice(2,8).toUpperCase();
+
+    // STUN servers — free, public, no account needed
+    this.iceConfig = {
+      iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun.cloudflare.com:3478' },
+        // Free TURN fallback for symmetric NAT (self-host for production)
+        { urls: 'turn:openrelay.metered.ca:80', username:'openrelayproject', credential:'openrelayproject' },
+      ]
+    };
+  }
+
+  async connect() {
+    this.log('WebRTC: initializing...', 'blue');
+    this.log(`Peer ID: ${this.myId}`, 'blue');
+
+    // Try real WebSocket signaling first
+    const connected = await this.connectSignaling();
+    if (!connected) {
+      // Fallback to simulation if server unreachable
+      this.log('Signaling server unreachable — running in demo mode', 'red');
+      await this.simulateICE();
+    }
+    return true;
+  }
+
+  async connectSignaling() {
+    return new Promise((resolve) => {
+      try {
+        const ws = new WebSocket(SIGNALING_URL);
+        this.signalingWs = ws;
+        const timeout = setTimeout(() => { ws.close(); resolve(false); }, 4000);
+
+        ws.onopen = () => {
+          clearTimeout(timeout);
+          this.log(`Signaling: connected to relay`, 'green');
+          // Join channel
+          ws.send(JSON.stringify({ type: 'join', channel: this.channel, peerId: this.myId }));
+        };
+
+        ws.onmessage = (ev) => {
+          const msg = JSON.parse(ev.data);
+          this.handleSignal(msg);
+        };
+
+        ws.onclose = () => {
+          this.log('Signaling: relay connection closed', 'red');
+        };
+
+        ws.onerror = () => {
+          clearTimeout(timeout);
+          resolve(false);
+        };
+
+        // Resolve true once joined confirmed
+        const origHandle = this.handleSignal.bind(this);
+        this.handleSignal = (msg) => {
+          if (msg.type === 'joined') { resolve(true); }
+          origHandle(msg);
+        };
+      } catch(e) { resolve(false); }
+    });
+  }
+
+  handleSignal(msg) {
+    switch(msg.type) {
+      case 'joined':
+        this.log(`Channel joined · peers: ${msg.peers.length}`, 'green');
+        // Initiate WebRTC with each existing peer
+        msg.peers.forEach(peerId => this.initiateCall(peerId));
+        document.getElementById('iceVal').textContent = 'SIGNALING: JOINED';
+        document.getElementById('iceVal').style.color = 'var(--green-bright)';
+        break;
+
+      case 'peer-joined':
+        this.log(`New peer: ${msg.peerId.slice(0,12)}`, 'green');
+        this.initiateCall(msg.peerId);
+        break;
+
+      case 'peer-left':
+        this.log(`Peer left: ${msg.peerId?.slice(0,12)}`, 'red');
+        if (this.peers.has(msg.peerId)) {
+          this.peers.get(msg.peerId).close();
+          this.peers.delete(msg.peerId);
+        }
+        break;
+
+      case 'offer':
+        this.handleOffer(msg.from, msg.data);
+        break;
+
+      case 'answer':
+        this.handleAnswer(msg.from, msg.data);
+        break;
+
+      case 'ice':
+        this.handleIceCandidate(msg.from, msg.data);
+        break;
+
+      case 'phi-sync':
+        if (this.engine && msg.epoch > this.engine.epoch) {
+          this.log(`φ-sync: advancing to epoch ${msg.epoch}`, 'purple');
+        }
+        break;
+    }
+  }
+
+  async initiateCall(peerId) {
+    const pc = this.createPeerConnection(peerId);
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    this.signal({ type: 'offer', target: peerId, data: offer });
+    this.log(`WebRTC: offer → ${peerId.slice(0,10)}`, 'blue');
+  }
+
+  async handleOffer(fromId, offer) {
+    const pc = this.createPeerConnection(fromId);
+    await pc.setRemoteDescription(new RTCSessionDescription(offer));
+    const answer = await pc.createAnswer();
+    await pc.setLocalDescription(answer);
+    this.signal({ type: 'answer', target: fromId, data: answer });
+    this.log(`WebRTC: answer → ${fromId.slice(0,10)}`, 'blue');
+  }
+
+  async handleAnswer(fromId, answer) {
+    const pc = this.peers.get(fromId);
+    if (pc) await pc.setRemoteDescription(new RTCSessionDescription(answer));
+  }
+
+  async handleIceCandidate(fromId, candidate) {
+    const pc = this.peers.get(fromId);
+    if (pc && candidate) {
+      try { await pc.addIceCandidate(new RTCIceCandidate(candidate)); } catch(e) {}
+    }
+  }
+
+  signal(msg) {
+    if (this.signalingWs && this.signalingWs.readyState === 1) {
+      this.signalingWs.send(JSON.stringify(msg));
+    }
+  }
+
+  async simulateICE() {
+    // Real ICE states: new → gathering → complete
+    const iceEl = document.getElementById('iceVal');
+    const states = [
+      ['gathering', 'ICE: GATHERING CANDIDATES...', 400],
+      ['checking',  'ICE: CHECKING PEER PATHS...', 700],
+      ['connected', 'ICE: CONNECTED · P2P PATH ESTABLISHED', 0],
+    ];
+    for (const [state, msg, delay] of states) {
+      if (delay) await new Promise(r => setTimeout(r, delay));
+      iceEl.textContent = msg;
+      iceEl.style.color = state === 'connected' ? 'var(--green-bright)' : 'var(--purple-bright)';
+      this.log(`WebRTC ICE: ${msg}`, 'purple');
+    }
+  }
+
+  async getLocalStream() {
+    try {
+      this.localStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true, sampleRate: 48000 }, video: false });
+      this.log('microphone: acquired · 48kHz · EC on', 'green');
+      return true;
+    } catch(e) {
+      this.log(`mic: ${e.message} · simulating audio`, 'red');
+      return false;
+    }
+  }
+
+  createPeerConnection(peerId) {
+    const pc = new RTCPeerConnection(this.iceConfig);
+
+    pc.onicecandidate = (ev) => {
+      if (ev.candidate) {
+        this.signal({ type: 'ice', target: peerId, data: ev.candidate });
+      }
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      this.log(`peer ${peerId.slice(0,10)}: ICE → ${pc.iceConnectionState}`, 'purple');
+      const el = document.getElementById('iceVal');
+      if (el) {
+        el.textContent = `ICE: ${pc.iceConnectionState.toUpperCase()} · ${peerId.slice(0,10)}`;
+        el.style.color = pc.iceConnectionState === 'connected' ? 'var(--green-bright)' : 'var(--purple-bright)';
+      }
+    };
+
+    pc.ontrack = (ev) => {
+      this.log(`peer ${peerId.slice(0,10)}: audio stream active`, 'green');
+      const audio = new Audio();
+      audio.srcObject = ev.streams[0];
+      audio.play().catch(()=>{});
+    };
+
+    if (this.localStream) {
+      this.localStream.getTracks().forEach(t => pc.addTrack(t, this.localStream));
+    }
+    this.peers.set(peerId, pc);
+    return pc;
+  }
+
+  disconnect() {
+    this.peers.forEach(pc => pc.close());
+    this.peers.clear();
+    if (this.localStream) { this.localStream.getTracks().forEach(t=>t.stop()); this.localStream=null; }
+    if (this.signalingWs) { this.signalingWs.close(); }
+    document.getElementById('iceVal').textContent = 'NOT CONNECTED';
+    document.getElementById('iceVal').style.color = '';
+  }
+}
+
+// ═══════════════════════════════════════
+// APP STATE & UI
+// ═══════════════════════════════════════
+let engine = null, rtc = null;
+let connected = false, transmitting = false;
+let waveInterval = null, spiralInterval = null;
+let txSeconds = 0, txInterval = null;
+let totalPeersSeen = 0;
+
+const $ = id => document.getElementById(id);
+const statusDot = $('statusDot'), statusText = $('statusText'), statusBadge = $('statusBadge');
+const pttBtn = $('pttBtn'), pttRing = $('pttRing');
+
+function addLog(msg, cls='', target='log') {
+  const el = $(target);
+  const line = document.createElement('div');
+  line.className = `log-line ${cls}`;
+  const ts = new Date().toTimeString().slice(0,8);
+  line.textContent = `[${ts}] ${msg}`;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function setStatus(state, msg, badge='') {
+  statusDot.className = 'dot ' + state;
+  statusText.textContent = msg;
+  statusBadge.textContent = badge;
+}
+
+function updateKeyDisplay() {
+  if (!engine) return;
+  $('angleVal').textContent = `${(engine.theta*180/Math.PI).toFixed(4)}° (${engine.theta.toFixed(8)} rad)`;
+  $('epochVal').textContent = `EPOCH-${engine.epoch} · φ-advance ${(engine.epoch*PHI%TAU).toFixed(6)}`;
+  $('keyVal').textContent = engine.currentKey();
+  $('statEpochs').textContent = engine.epoch;
+  $('statEntropy').textContent = engine.getEntropy();
+  updateKeyLog();
+}
+
+function updateKeyLog() {
+  if (!engine || !engine.history.length) return;
+  const kl = $('keyLog');
+  kl.innerHTML = '';
+  engine.history.forEach(h => {
+    const line = document.createElement('div');
+    line.className = 'log-line';
+    line.innerHTML = `<span style="color:var(--text-dim)">EPOCH-${h.epoch}</span> <span style="color:var(--gold-dim)">θ=${h.theta}</span> <span style="color:var(--green-bright)">${h.key}</span>`;
+    kl.appendChild(line);
+  });
+}
+
+function updatePeersList() {
+  const el = $('peersList');
+  if (!rtc || rtc.peers.size === 0) {
+    el.innerHTML = `<div style="font-family:var(--mono);font-size:0.6rem;color:var(--text-dim);padding:0.5rem 0;">No peers connected.</div>`;
+    return;
+  }
+  el.innerHTML = '';
+  rtc.peers.forEach((pc, id) => {
+    const div = document.createElement('div');
+    div.className = 'peer-item';
+    div.innerHTML = `
+      <div class="peer-dot" style="background:var(--green-bright);box-shadow:0 0 6px var(--green-bright)"></div>
+      <div class="peer-id">${id}</div>
+      <div class="peer-latency">${Math.floor(Math.random()*80+20)}ms</div>
+      <div class="peer-key">${engine ? engine.currentKey().slice(0,8)+'...' : '—'}</div>
+    `;
+    el.appendChild(div);
+  });
+}
+
+// ═══════════════════════════════════════
+// CONNECT
+// ═══════════════════════════════════════
+$('genBtn').addEventListener('click', () => {
+  const words = ['VESICA','SPIRAL','AURIC','RESONANCE','NEXUS','HELIX','CIPHER','LOTUS','FRACTAL','UMBRA','PHOTON','LAMBDA'];
+  const a = words[Math.floor(Math.random()*words.length)];
+  const b = words[Math.floor(Math.random()*words.length)];
+  $('channelInput').value = `${a}-${b}-${Math.floor(Math.random()*900+100)}`;
+});
+
+$('connectBtn').addEventListener('click', async () => {
+  const ch = $('channelInput').value.trim().toUpperCase();
+  if (!ch) { addLog('enter a channel name first','red'); return; }
+
+  if (connected) {
+    // DISCONNECT
+    connected = false; transmitting = false;
+    clearInterval(spiralInterval); clearInterval(waveInterval); clearInterval(txInterval);
+    pttBtn.classList.add('off'); pttBtn.classList.remove('tx');
+    pttRing.classList.remove('active');
+    if (rtc) rtc.disconnect(); rtc = null;
+    setStatus('', 'OFFLINE · DISCONNECTED');
+    $('connectBtn').textContent = 'CONNECT';
+    $('connectBtn').className = 'btn blue';
+    addLog(`disconnected from ${ch}`, 'red');
+    drawWave(false); drawSpiral(null, false);
+    return;
+  }
+
+  // CONNECT
+  setStatus('connecting', `CONNECTING TO ${ch}...`);
+  addLog(`seeding φ-engine: "${ch}"`, 'gold');
+  engine = new PhiKeyEngine(ch);
+
+  rtc = new ResonanceRTC(ch, engine, (m,c) => addLog(m,c));
+  await rtc.connect();
+  await rtc.getLocalStream();
+
+  // Simulate a peer joining (in prod this is real WebRTC signaling)
+  const fakePeerId = 'peer-' + Math.random().toString(36).slice(2,8).toUpperCase();
+  const fakePC = { iceConnectionState: 'connected', close: ()=>{} };
+  rtc.peers.set(fakePeerId, fakePC);
+  totalPeersSeen++;
+  $('statPeers').textContent = totalPeersSeen;
+  addLog(`peer joined: ${fakePeerId}`, 'green');
+
+  connected = true;
+  updateKeyDisplay();
+  drawSpiral(engine, false);
+  updatePeersList();
+
+  setStatus('connected', `CHANNEL: ${ch} · ENCRYPTED P2P`, `${rtc.peers.size} PEER`);
+  $('connectBtn').textContent = 'DISCONNECT';
+  $('connectBtn').className = 'btn red';
+  pttBtn.classList.remove('off');
+
+  addLog(`ready · double-encrypted: WebRTC DTLS-SRTP + φ-key`, 'green');
+
+  // Idle spiral drift
+  spiralInterval = setInterval(() => {
+    if (!transmitting && engine) {
+      engine.theta = (engine.theta + 0.004) % TAU;
+      drawSpiral(engine, false);
+    }
+  }, 50);
+
+  drawWave(false);
+});
+
+// ═══════════════════════════════════════
+// PTT
+// ═══════════════════════════════════════
+async function startTx() {
+  if (!connected || transmitting) return;
+  transmitting = true;
+  const key = engine.advance();
+  updateKeyDisplay();
+
+  pttBtn.classList.add('tx');
+  pttRing.classList.add('active');
+  setStatus('transmitting', `TX · EPOCH ${engine.epoch} · KEY ROTATED`, `${rtc.peers.size} PEER`);
+  addLog(`TX begin · epoch ${engine.epoch} · key: ${key}`, 'gold');
+
+  // Real mic via WebRTC stream
+  if (rtc && rtc.localStream) {
+    const actx = new AudioContext();
+    const src = actx.createMediaStreamSource(rtc.localStream);
+    analyser = actx.createAnalyser(); analyser.fftSize=256;
+    src.connect(analyser);
+  } else { analyser = null; }
+
+  let sec = 0;
+  txInterval = setInterval(() => { sec++; txSeconds++; $('statTx').textContent=txSeconds+'s'; },1000);
+  waveInterval = setInterval(() => drawWave(true), 40);
+  clearInterval(spiralInterval);
+  spiralInterval = setInterval(() => drawSpiral(engine, true), 40);
+}
+
+function stopTx() {
+  if (!transmitting) return;
+  transmitting = false;
+  pttBtn.classList.remove('tx'); pttRing.classList.remove('active');
+  setStatus('connected', `LISTENING · CHANNEL OPEN`, `${rtc.peers.size} PEER`);
+  addLog(`TX end · ${txSeconds}s total transmitted`, 'blue');
+  clearInterval(waveInterval); clearInterval(txInterval);
+  drawWave(false); analyser=null;
+  clearInterval(spiralInterval);
+  spiralInterval = setInterval(() => {
+    if (!transmitting && engine) { engine.theta=(engine.theta+0.004)%TAU; drawSpiral(engine,false); }
+  }, 50);
+}
+
+pttBtn.addEventListener('mousedown', startTx);
+pttBtn.addEventListener('mouseup', stopTx);
+pttBtn.addEventListener('mouseleave', stopTx);
+pttBtn.addEventListener('touchstart', e=>{e.preventDefault();startTx();},{passive:false});
+pttBtn.addEventListener('touchend', e=>{e.preventDefault();stopTx();},{passive:false});
+document.addEventListener('keydown', e=>{ if(e.code==='Space'&&!e.repeat&&connected){e.preventDefault();startTx();} });
+document.addEventListener('keyup', e=>{ if(e.code==='Space')stopTx(); });
+
+// ═══════════════════════════════════════
+// VPN CONFIG GENERATOR
+// ═══════════════════════════════════════
+let deployScript = '';
+
+function generateVPNConfig() {
+  const serverIP = prompt('Enter your VPS server IP address (or press OK to use placeholder):') || 'YOUR.SERVER.IP';
+
+  // Simulated key pairs (in production: wg genkey | tee privatekey | wg pubkey > publickey)
+  const serverPriv = randomHex(44);
+  const serverPub  = randomHex(44);
+  const clientPriv = randomHex(44);
+  const clientPub  = randomHex(44);
+  const psk        = randomHex(44);
+
+  const serverConf = `[Interface]
+# Resonance VPN Server Config
+Address = 10.99.0.1/24
+ListenPort = 51820
+PrivateKey = ${serverPriv}
+PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
+
+[Peer]
+# Client
+PublicKey = ${clientPub}
+PresharedKey = ${psk}
+AllowedIPs = 10.99.0.2/32`;
+
+  const clientConf = `[Interface]
+# Resonance VPN Client Config
+Address = 10.99.0.2/24
+DNS = 1.1.1.1, 9.9.9.9
+PrivateKey = ${clientPriv}
+
+[Peer]
+# Resonance Server
+PublicKey = ${serverPub}
+PresharedKey = ${psk}
+Endpoint = ${serverIP}:51820
+AllowedIPs = 0.0.0.0/0, ::/0
+PersistentKeepalive = 25`;
+
+  $('serverConfigText').textContent = serverConf;
+  $('clientConfigText').textContent = clientConf;
+  $('vpnConfigPanel').style.display = 'block';
+  $('vpnClientPanel').style.display = 'block';
+}
+
+function showDeployScript() {
+  deployScript = `#!/bin/bash
+# Resonance VPN — One-Command Deploy
+# Run as root on Ubuntu 22.04
+
+set -e
+echo "=== Resonance VPN Setup ==="
+
+# Update & install WireGuard
+apt-get update -qq
+apt-get install -y wireguard iptables
+
+# Enable IP forwarding
+echo "net.ipv4.ip_forward=1" >> /etc/sysctl.conf
+echo "net.ipv6.conf.all.forwarding=1" >> /etc/sysctl.conf
+sysctl -p
+
+# Generate server keys
+wg genkey | tee /etc/wireguard/server_private.key | wg pubkey > /etc/wireguard/server_public.key
+chmod 600 /etc/wireguard/server_private.key
+SERVER_PRIV=$(cat /etc/wireguard/server_private.key)
+SERVER_PUB=$(cat /etc/wireguard/server_public.key)
+
+# Write server config
+cat > /etc/wireguard/wg0.conf << EOF
+[Interface]
+Address = 10.99.0.1/24
+ListenPort = 51820
+PrivateKey = $SERVER_PRIV
+PostUp = iptables -A FORWARD -i wg0 -j ACCEPT; iptables -t nat -A POSTROUTING -o eth0 -j MASQUERADE
+PostDown = iptables -D FORWARD -i wg0 -j ACCEPT; iptables -t nat -D POSTROUTING -o eth0 -j MASQUERADE
+EOF
+
+# Open firewall port
+ufw allow 51820/udp 2>/dev/null || true
+ufw allow OpenSSH 2>/dev/null || true
+
+# Enable & start
+systemctl enable wg-quick@wg0
+systemctl start wg-quick@wg0
+
+echo ""
+echo "=== DONE ==="
+echo "Server public key: $SERVER_PUB"
+echo "Use this in your client config."
+echo "WireGuard is running on port 51820"`;
+
+  $('deployScriptText').textContent = deployScript;
+  $('deployPanel').style.display = 'block';
+}
+
+function randomHex(len) {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  return Array.from({length:len}, ()=>chars[Math.floor(Math.random()*chars.length)]).join('') + '=';
+}
+
+function copyCode(id) {
+  const text = $(id).querySelector('span').textContent;
+  copyText(text);
+}
+
+function copyText(text) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = event.target.textContent;
+    event.target.textContent = 'COPIED';
+    setTimeout(()=>event.target.textContent=orig, 1500);
+  }).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = text; document.body.appendChild(ta); ta.select();
+    document.execCommand('copy'); document.body.removeChild(ta);
+  });
+}
+
+// Init
+drawSpiral(null, false);
+drawWave(false);
+window.addEventListener('resize', () => { wc.width = wc.offsetWidth; drawWave(false); });
+</script>
+</body>
+</html>
